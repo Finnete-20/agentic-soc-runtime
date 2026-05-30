@@ -116,15 +116,15 @@ app = workflow.compile()
 ```
 ## Tech Stack
 
-Python
+- Python
 
-FastAPI
+- FastAPI
 
-LangGraph
+- LangGraph
 
-React
+- React
 
-TailwindCSS
+- TailwindCSS
 
 ## How to Run
 
@@ -149,8 +149,8 @@ python evaluate.py
 
 This system demonstrates:
 
-Multi-agent reasoning
-SOC-style workflows
-Tool-based intelligence
-Memory-enhanced detection
-Explainable phishing detection
+- Multi-agent reasoning
+- SOC-style workflows
+- Tool-based intelligence
+- Memory-enhanced detection
+- Explainable phishing detection

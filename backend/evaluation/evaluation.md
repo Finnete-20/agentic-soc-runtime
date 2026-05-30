@@ -102,15 +102,15 @@ Pure keyword matching
 
 The evaluation framework measures:
 
-Accuracy
+- Accuracy
 
-Risk score distribution
+- Risk score distribution
 
-Confusion patterns
+- Confusion patterns
 
-Edge-case classification behavior
+- Edge-case classification behavior
 
-Baseline comparison gap
+- Baseline comparison gap
 ## 6. Risk Scoring Model
 
 The system uses a SOC-aligned risk scoring approach:
@@ -124,8 +124,8 @@ This enables gradient-based reasoning instead of binary classification.
 
 ## 7. Key Results Summary
 System	Performance
-Agentic SOC System	70–85% (varies by dataset complexity)
-Baseline Classifier	60–75%
+- Agentic SOC System	70–85% (varies by dataset complexity)
+- Baseline Classifier	60–75%
 ## 8. Key Observations
 8.1 Agentic SOC System
 Produces structured SOC-style reports
@@ -150,13 +150,13 @@ Prioritizes caution over binary decision-making
 
 Baseline Limitations
 
-No contextual understanding
+- No contextual understanding
 
-No historical memory
+- No historical memory
 
-No adaptive reasoning
+- No adaptive reasoning
 
-Poor handling of edge cases
+- Poor handling of edge cases
 ## 10. Key Findings
 Multi-agent reasoning improves consistency
 

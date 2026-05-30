@@ -224,6 +224,6 @@ Why Memory Layer
 
 ## Security analysis improves when:
 
-past incidents are reused
-patterns are recognized
-repeated attacks are tracked
+- past incidents are reused
+- patterns are recognized
+- repeated attacks are tracked
