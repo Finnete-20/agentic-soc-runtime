@@ -43,13 +43,29 @@ backend/evaluation/data/
 
 Each sample is processed using two systems:
 
-## 4.1 Agentic SOC System
+---
 
-The full pipeline:
+### 4.1 Agentic SOC System
 
-IOC Extraction → Threat Intelligence → Memory Lookup → Risk Reasoning → SOC Reporting
+#### System Pipeline
 
-Outputs:
+```text
+Email Input
+    ↓
+IOC Extraction
+    ↓
+Threat Intelligence
+    ↓
+Memory Lookup
+    ↓
+Risk Reasoning Engine
+    ↓
+SOC Reporting
+    ↓
+Final Classification Output
+```
+
+### Outputs:
 
 Risk score (0–100)
 Final classification (legit / suspicious / phishing)
