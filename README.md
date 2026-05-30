@@ -68,21 +68,23 @@ Risk score range: 0–100
 
 ## Architecture
 
-System Flow:
+### System Flow
 
+```text
 Email Input
-↓
+    ↓
 IOC Extraction Agent
-↓
+    ↓
 Threat Intelligence Layer
-↓
+    ↓
 Memory Lookup Agent
-↓
+    ↓
 Risk Reasoning Engine
-↓
+    ↓
 SOC Reporting Agent
-↓
+    ↓
 Final Classification Output
+```
 
 ---
 
