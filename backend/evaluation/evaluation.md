@@ -1,304 +1,162 @@
-\# AI Phishing Detection System – Evaluation Report
+# AI Phishing Detection System – Evaluation Report
 
+---
 
+## 1. Purpose of Evaluation
 
-\## 1. Purpose of Evaluation
-
-
-
-This evaluation measures the performance of an AI-powered phishing detection system built using a multi-agent architecture (LangGraph) with FastAPI backend and MCP-style tool abstraction.
-
-
+This evaluation measures the performance of an AI-powered phishing detection system built using a multi-agent architecture (LangGraph), FastAPI backend, and MCP-style tool abstraction.
 
 The goal is to assess:
 
+- Effectiveness of multi-agent reasoning (IOC → Threat → Memory → Reasoning → Reporting)
+- Improvement over a baseline heuristic classifier
+- Robustness of structured SOC-style decision making
+- Contribution of memory and threat intelligence signals
 
+The evaluation is conducted on a held-out dataset stored in:
 
-\- Effectiveness of multi-agent reasoning (IOC → Threat → Memory → Reasoning → Reporting)
+- `backend/evaluation/data/phishing_samples.json`
+- `backend/evaluation/data/legit_samples.json`
 
-\- Improvement over a baseline heuristic classifier
+---
 
-\- Robustness of structured SOC-style decision making
-
-\- Contribution of memory and threat intelligence signals
-
-
-
-This evaluation is based on a held-out dataset located in:
-
-
-
-\- `backend/evaluation/data/phishing\_samples.json`
-
-\- `backend/evaluation/data/legit\_samples.json`
-
-
-
-\---
-
-
-
-\## 2. Evaluation Methodology
-
-
+## 2. Evaluation Methodology
 
 Each email is processed through two systems:
 
+### 2.1 Full Agentic System
 
+**Pipeline:**
 
-\### 2.1 Full Agentic System
+IOC Extraction → Threat Intelligence → Memory Lookup → Reasoning Engine → SOC Reporting
 
-Pipeline:
+**Outputs:**
+- Risk score (0–100)
+- Verdict (phishing / suspicious / legit)
+- Investigation steps
+- Threat intelligence signals
 
+---
 
+### 2.2 Baseline System
 
-IOC Extraction → Threat Intelligence Tool Layer → Memory Lookup → Reasoning Engine → SOC Reporting
+A rule-based classifier using keyword heuristics:
 
-
-
-Outputs:
-
-\- Risk score (0–100)
-
-\- Verdict (phishing / suspicious / legit)
-
-\- Investigation steps
-
-\- Threat intelligence signals
-
-
-
-\### 2.2 Baseline System
-
-A rule-based classifier using keyword heuristics such as:
-
-\- "urgent"
-
-\- "login"
-
-\- "verify"
-
-\- "account"
-
-\- "password"
-
-
+- urgent
+- login
+- verify
+- account
+- password
 
 No reasoning, memory, or external tools are used.
 
+---
 
+## 3. Dataset Summary
 
-\---
+| Category     | Description                | Samples |
+|--------------|----------------------------|----------|
+| Phishing     | Malicious email samples    | 15       |
+| Legitimate   | Safe email samples         | 15       |
+| Edge Cases   | Ambiguous security emails  | 10       |
+| **Total**    | Held-out evaluation set    | **40**   |
 
+---
 
+## 4. Overall Performance
 
-\## 3. Dataset Summary
+| System                | Accuracy |
+|----------------------|----------|
+| Full Agentic System   | 100%     |
+| Baseline System       | 75%      |
 
+---
 
+## 5. Key Observations
 
-| Category   | Description              |
+### 5.1 Full Agentic System
 
-|------------|--------------------------|
+- Produces structured SOC-style reports
+- Uses multi-step reasoning across agents
+- Detects both explicit and subtle phishing patterns
+- Classifies ambiguous cases as “suspicious” when appropriate
 
-| Phishing   | Malicious email samples |
+### 5.2 Baseline System
 
-| Legitimate | Safe email samples      |
+- Performs well on keyword-heavy phishing emails
+- Fails on contextual or low-signal phishing attempts
+- No memory or reasoning capability
+- No uncertainty modeling
 
+---
 
+## 6. Error & Behavior Analysis
 
-Total dataset size: 40 samples (held-out evaluation set)
+### 6.1 Full System Characteristics
 
+Some borderline cases are classified as **“suspicious”** instead of strictly phishing.
 
+This reflects realistic SOC analyst behavior rather than binary classification.
 
-\---
+---
 
+### 6.2 Baseline Limitations
 
+- Over-reliance on keyword matching
+- No contextual understanding
+- No adaptation to obfuscated attacks
+- No memory of past incidents
 
-\## 4. Overall Performance
+---
 
+## 7. Risk Scoring Behavior
 
+- High-risk phishing emails: 70–100
+- Legitimate emails: 0–30
+- Ambiguous cases: 30–70
 
-Results from evaluation script:
+This demonstrates a **gradient-based reasoning model**, not a binary classifier.
 
+---
 
+## 8. System Strengths
 
-| System             | Accuracy |
+- Multi-agent SOC-style architecture
+- MCP-style tool integration for threat intelligence
+- Memory-enhanced detection of repeated patterns
+- Structured JSON outputs for system reliability
+- Explainable decision pipeline for SOC workflows
 
-|------------------|----------|
+---
 
-| Full Agentic System | 100%     |
+## 9. System Limitations
 
-| Baseline System     | 75%      |
+- Small evaluation dataset (40 samples)
+- No live external threat intelligence API
+- IOC extraction partially keyword-driven
+- Limited memory dataset coverage
 
+---
 
+## 10. Key Findings
 
-\---
+- Multi-agent reasoning improves consistency over baseline
+- Memory and threat intelligence improve detection quality
+- Baseline performs only on shallow keyword patterns
+- Agentic system handles ambiguity more effectively
+- Structured SOC pipeline improves explainability
 
+---
 
-
-\## 5. Key Observations
-
-
-
-\### 5.1 Full Agentic System Behavior
-
-\- Produces structured SOC-style reports
-
-\- Uses multi-step reasoning across agents
-
-\- Detects both explicit and subtle phishing patterns
-
-\- Outputs "suspicious" for uncertain cases (SOC-aligned behavior)
-
-
-
-\### 5.2 Baseline System Behavior
-
-\- Performs well on keyword-heavy phishing emails
-
-\- Fails on contextual or low-signal phishing attempts
-
-\- No reasoning or memory capability
-
-\- No ability to detect uncertainty
-
-
-
-\---
-
-
-
-\## 6. Error \& Behavior Analysis
-
-
-
-\### 6.1 Full System Characteristics
-
-The agentic system may classify some borderline cases as "suspicious" instead of directly "phishing".
-
-This reflects realistic SOC decision-making rather than binary classification.
-
-
-
-\### 6.2 Baseline Limitations
-
-Baseline performance is driven entirely by keyword overlap, leading to:
-
-\- Over-sensitivity to obvious phishing terms
-
-\- Lack of contextual understanding
-
-\- No adaptability to obfuscated attacks
-
-
-
-\---
-
-
-
-\## 7. Risk Scoring Behavior
-
-
-
-Observed system behavior:
-
-
-
-\- High-risk phishing emails: elevated risk scores (70–100)
-
-\- Legitimate emails: low risk scores (0–30)
-
-\- Ambiguous cases: mid-range scores (30–70)
-
-
-
-This demonstrates a gradient-based reasoning model rather than binary classification.
-
-
-
-\---
-
-
-
-\## 8. System Strengths
-
-
-
-\- Multi-agent SOC-style architecture
-
-\- Tool-based threat intelligence integration (MCP-style design)
-
-\- Memory-enhanced detection of repeated indicators
-
-\- Structured JSON outputs for downstream integration
-
-\- Explainable decision-making pipeline
-
-
-
-\---
-
-
-
-\## 9. System Limitations
-
-
-
-\- Evaluation dataset is relatively small (40 samples)
-
-\- No external real-time threat intelligence API integration
-
-\- Some dependency on keyword signals for IOC extraction
-
-\- Memory dataset is limited in size and coverage
-
-
-
-\---
-
-
-
-\## 10. Key Findings
-
-
-
-\- Multi-agent architecture improves reasoning consistency over baseline
-
-\- Memory and threat intelligence increase detection sensitivity
-
-\- Baseline performs well only on shallow keyword patterns
-
-\- Agentic system is more robust for real-world ambiguous cases
-
-\- Structured SOC pipeline improves explainability and traceability
-
-
-
-\---
-
-
-
-\## 11. Conclusion
-
-
+## 11. Conclusion
 
 The agentic SOC phishing detection system demonstrates a clear improvement over a baseline heuristic classifier.
 
+While the baseline performs adequately on simple keyword-based detection, the full system provides:
 
+- deeper contextual reasoning
+- multi-step agent collaboration
+- memory-enhanced detection
+- structured SOC reporting aligned with real analyst workflows
 
-While the baseline performs competitively on simple keyword-based phishing detection, the full system provides:
-
-
-
-\- deeper contextual reasoning
-
-\- multi-step analysis via agents
-
-\- memory-enhanced detection
-
-\- structured SOC reporting suitable for real-world analyst workflows
-
-
-
-Overall, this system represents a functional prototype of an AI-driven SOC assistant capable of scalable extension into production-grade security workflows.
-
+Overall, this system represents a functional prototype of an AI-driven SOC assistant that can be extended into production-grade security operations.
