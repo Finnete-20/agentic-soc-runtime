@@ -3,46 +3,27 @@ from state import AgentState
 
 def reasoning_agent(state: AgentState):
 
-    threat_data = state.get("threat_data", {})
-    memory_hits = state.get("memory_matches", [])
-
-    iocs = state.get("extracted_iocs", {})
-    urls = iocs.get("urls", [])
-    domains = iocs.get("domains", [])
-
     risk = 0
 
-    # -------------------------
-    # URL threat scoring (HIGH SIGNAL)
-    # -------------------------
-    for url, result in threat_data.items():
-        if isinstance(result, dict):
-            risk += result.get("risk_score", 0) * 0.7
+    for item in state.get("threat_data", {}).values():
+        risk += item["risk_score"]
 
-    # -------------------------
-    # Domain risk (MEDIUM SIGNAL)
-    # -------------------------
-    risk += len(domains) * 5
+    signals = state.get("extracted_iocs", [])
 
-    # -------------------------
-    # URL count risk
-    # -------------------------
-    risk += len(urls) * 10
+    # nonlinear amplification (THIS IS KEY DIFFERENCE)
 
-    # -------------------------
-    # Memory boost (STRONG SIGNAL)
-    # -------------------------
-    if memory_hits:
-        risk += 20
-        state["investigation_steps"].append("Memory match → +20 risk boost")
+    if any(s[0] == "uppercase_ratio" for s in signals):
+        risk *= 1.2
+
+    if any(s[0] == "url_count" for s in signals):
+        risk += 15
+
+    if any(s[0] == "exclamation_count" for s in signals):
+        risk += 10
 
     # clamp
     risk = min(100, risk)
 
     state["risk_score"] = risk
-
-    state["investigation_steps"].append(
-        f"Reasoning Agent computed calibrated risk: {risk}"
-    )
 
     return state

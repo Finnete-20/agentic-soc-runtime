@@ -1,20 +1,33 @@
-from state import AgentState
-from tools.url_tool import url_reputation_check
+def threat_analysis(state):
 
+    threat_data = {}
 
-def threat_analysis(state: AgentState):
-    iocs = state.get("extracted_iocs", {})
-    urls = iocs.get("urls", [])
+    for name, value in state.get("extracted_iocs", []):
 
-    results = {}
+        score = 0
 
-    for url in urls:
-        results[url] = url_reputation_check(url)
+        # REAL weighting (continuous signal space)
 
-    state["threat_data"] = results
+        if name == "url_count":
+            score += value * 35
 
-    state["investigation_steps"].append(
-        "Threat Agent performed URL reputation analysis (clean scope)"
-    )
+        elif name == "exclamation_count":
+            score += value * 10
+
+        elif name == "uppercase_ratio":
+            score += value * 50
+
+        elif name == "suspicious_density":
+            score += value * 20
+
+        elif name == "length":
+            score += 5 if value < 50 else 0
+
+        elif name == "word_count":
+            score += 5 if value < 8 else 0
+
+        threat_data[name] = {"risk_score": score}
+
+    state["threat_data"] = threat_data
 
     return state

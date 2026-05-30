@@ -1,122 +1,66 @@
 # Agentic SOC Phishing Detection System
 
-## Overview
+# Overview
 
-This project is an **agentic AI system for Security Operations Center (SOC) phishing detection**.
+The Agentic SOC Phishing Detection System is an AI-powered Security Operations Center (SOC) assistant designed to detect phishing emails using a multi-agent architecture.
 
-It uses a **multi-agent architecture built with LangGraph**, combined with a **tool-based abstraction layer (MCP-style design)** to analyze email content and classify phishing attempts with explainable reasoning.
+The system simulates SOC workflows using LangGraph, tool-based intelligence, memory reasoning, and structured reporting.
 
-Unlike traditional machine learning classifiers, this system focuses on:
+It focuses on explainability and structured reasoning rather than only classification accuracy.
 
-- structured decision-making
-- step-by-step SOC-style investigation
-- tool-augmented security analysis
-- explainable outputs for analysts
+# Key Features
 
----
+## Multi-Agent SOC Pipeline
 
-## Key Features
+- IOC Extraction Agent
+- Threat Intelligence Agent
+- Memory Lookup Agent
+- Risk Reasoning Engine
+- SOC Reporting Agent
 
-### Multi-Agent SOC Workflow
+## Tool-Based Architecture
 
-The system decomposes phishing detection into specialized agents:
+- URL reputation checking
+- Tool abstraction layer
+- Extensible SOC tools design
 
-- IOC Extraction Agent (extracts indicators of compromise)
-- Threat Intelligence Agent (simulates URL reputation analysis)
-- Memory Agent (checks historical incidents)
-- Reasoning Agent (computes risk score)
-- Reporting Agent (final SOC classification)
+Future integrations:
+- VirusTotal
+- AbuseIPDB
+- URLScan
 
----
+## Memory System
 
-### Tool-Based Architecture (MCP-Style Design)
+- Stores past incidents
+- Detects recurring threats
+- Improves contextual analysis
 
-The system uses a modular tool abstraction layer inspired by MCP (Model Context Protocol):
+## Risk Scoring
 
-- `url_reputation_check` simulates external threat intelligence APIs
-- Tool registry pattern allows plug-and-play extensions
-- Designed for future integration with real SOC tools (VirusTotal, AbuseIPDB, etc.)
+0–30 = Legitimate  
+31–60 = Suspicious  
+61–100 = Phishing
 
----
+# Architecture
 
-### Risk-Based Reasoning Engine
+Email Input
+↓
+IOC Extraction Agent
+↓
+Threat Intelligence Layer
+↓
+Memory Lookup Agent
+↓
+Risk Reasoning Engine
+↓
+SOC Reporting Agent
+↓
+Final Classification Output
 
-Instead of simple binary classification, the system computes:
+# LangGraph Workflow
 
-- Risk score (0–100)
-- SOC classification:
-  - 0–30 → Legitimate
-  - 30–60 → Suspicious
-  - 60–100 → Phishing
-
-This reflects real SOC analyst decision-making.
-
----
-
-## Architecture
-
-### System Flow
-
-```
-┌───────────────┐
-│ Email Input   │
-└──────┬────────┘
-       ↓
-┌───────────────┐
-│ IOC Extraction │
-└──────┬────────┘
-       ↓
-┌────────────────────────────┐
-│ Threat Intelligence Layer  │
-└──────┬─────────────────────┘
-       ↓
-┌────────────────────────────┐
-│ Memory Lookup Agent        │
-└──────┬─────────────────────┘
-       ↓
-┌────────────────────────────┐
-│ Risk Reasoning Engine      │
-└──────┬─────────────────────┘
-       ↓
-┌────────────────────────────┐
-│ SOC Reporting Agent        │
-└──────┬─────────────────────┘
-       ↓
-┌────────────────────────────┐
-│ Final Classification       │
-└────────────────────────────┘
-```
-
-
----
-
-### Code Mapping
-
-| Step | Implementation File |
-|------|--------------------|
-| Email Input | `main.py` |
-| IOC Extraction Agent | `ioc_agent.py` |
-| Threat Intelligence Layer | `threat_agent.py` |
-| Memory Lookup Agent | `memory_agent.py` |
-| Risk Reasoning Engine | `reasoning_agent.py` |
-| SOC Reporting Agent | `reporting_agent.py` |
-
----
-## LangGraph Workflow
-
-The system is implemented using **LangGraph**, enabling a structured multi-agent pipeline for SOC-style phishing analysis.
-
-### Workflow Execution Order
-
-```
 ioc → threat → memory → reasoning → report
-```
 
----
-
-### Graph Definition
-
-```python
 workflow = StateGraph(AgentState)
 
 workflow.add_node("ioc", extract_iocs)
@@ -133,118 +77,27 @@ workflow.add_edge("memory", "reasoning")
 workflow.add_edge("reasoning", "report")
 
 app = workflow.compile()
-```
 
----
+# Tech Stack
 
-## Evaluation
+Python, FastAPI, LangGraph, React, TailwindCSS
 
-The system is evaluated using a **held-out dataset** containing:
+# Run
 
-- Phishing emails  
-- Legitimate emails  
-- Edge-case ambiguous emails  
-
----
-
-## Evaluation Method
-
-Each sample is processed through:
-
-- Full agentic SOC pipeline  
-- Baseline keyword-based classifier  
-
----
-
-## Baseline Model
-
-A simple heuristic classifier:
-
-```python
-keywords = ["urgent", "verify", "login", "password", "account", "click", "suspended"]
-```
-
----
-
-## Metrics
-
-- Accuracy  
-- Risk distribution  
-- Confusion analysis  
-- Edge-case behavior analysis  
-
----
-
-## Results
-
-| System | Performance |
-|--------|------------|
-| Agentic SOC System | ~70–85% (varies with dataset complexity) |
-| Baseline Keyword Model | ~60–75% |
-
----
-
-## Key Insight
-
-The agentic system prioritizes:
-
-- explainability  
-- structured reasoning  
-- SOC-aligned decision making  
-
-rather than pure keyword-based accuracy.
-
-This makes it more realistic for Security Operations Center workflows.
-
----
-
-## Strengths
-
-- Multi-agent reasoning pipeline  
-- Tool-based threat intelligence abstraction  
-- Memory-enhanced detection capability  
-- Structured SOC reporting output  
-- Extensible architecture for production systems  
-
----
-
-## Limitations
-
-- Heavily rule-based (not ML-trained)  
-- Synthetic dataset bias affects evaluation  
-- Limited real-world threat intelligence integration  
-- Baseline model may outperform on simple keyword datasets  
-
----
-
-## How to Run
-
-### Backend Setup
-
-```bash
+Backend:
 cd backend
 pip install -r requirements.txt
 uvicorn main:api --reload
-```
 
----
+Frontend:
+cd frontend
+npm install
+npm run dev
 
-## Future Improvements
+Evaluation:
+cd backend
+python evaluate.py
 
-- Integration with real threat intelligence APIs (VirusTotal, AbuseIPDB)  
-- Embedding-based phishing detection model  
-- Confusion matrix + ROC-AUC evaluation  
-- SOC dashboard visualization UI  
-- Real email ingestion pipeline (IMAP/Gmail API)  
+# Purpose
 
----
-
-## Conclusion
-
-This project demonstrates a **prototype SOC agent system** that applies:
-
-- multi-agent reasoning  
-- tool-augmented intelligence  
-- structured security workflows  
-
-It is designed as a foundation for **AI-assisted Security Operations Centers**, focusing on explainability, modularity, and real-world SOC behavior rather than purely statistical accuracy.
+Multi-agent SOC simulation system for phishing detection with explainability and structured reasoning.

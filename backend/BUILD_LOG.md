@@ -1,112 +1,100 @@
-# BUILD LOG — Agentic SOC Phishing Detection System
+# Build Log
 
-## 1. Project Goal
-The goal of this project was to design an agentic SOC (Security Operations Center) workflow capable of analyzing email content and classifying phishing attempts using structured reasoning, tools, and multi-step AI agents.
+# Project
 
----
+Agentic SOC Phishing Detection System
 
-## 2. Initial System Design (v1)
-The initial version used a simple pipeline:
-- IOC extraction via regex
-- basic HTTP reachability checks
-- keyword-based risk scoring
-- rule-based verdict threshold
+# Goal
 
-### Limitation:
-This approach was functional but too simplistic and lacked:
-- modular tool abstraction
-- evaluation framework
-- model routing design
-- realistic SOC reasoning structure
+Build a multi-agent SOC system for phishing detection using structured reasoning and tool-based intelligence.
 
----
+# Timeline
 
-## 3. Design Evolution (Why Changes Were Made)
+## Phase 1 — Core Setup
 
-### 3.1 Introduction of Agent Architecture (LangGraph)
-We moved to a multi-agent graph system because:
-- SOC workflows are sequential and stateful
-- each step requires specialized reasoning
-- LangGraph allows explicit control flow and traceability
+- FastAPI backend
+- React frontend
+- LangGraph workflow
 
-This improved interpretability and modularity.
+Files:
+main.py
+runtime_graph.py
+state.py
 
----
+## Phase 2 — IOC Extraction
 
-### 3.2 Tool Abstraction (MCP-style Design)
-We introduced a tool layer (`url_reputation_check`) to simulate MCP-style tool usage.
+- URL extraction
+- Domain extraction
 
-#### Reasoning:
-- real SOC systems rely on external intelligence tools
-- separating tools from agents improves scalability
-- enables future integration with APIs like VirusTotal
+ioc_agent.py
 
----
+## Phase 3 — Threat Intelligence
 
-### 3.3 Model Routing Layer
-A routing abstraction was introduced to simulate different model capabilities per task:
-- IOC extraction → fast model
-- reasoning → strong model
-- reporting → structured model
+- URL reputation checks
+- Tool abstraction
 
-#### Reasoning:
-This reflects real-world LLM orchestration systems where different models are used for cost and performance optimization.
+threat_agent.py
+tools/url_tool.py
+tools/tool_registry.py
 
----
+## Phase 4 — Memory System
 
-### 3.4 Risk Scoring Iteration
-We iterated from:
-- simple threshold model
-→ to keyword + IOC hybrid scoring
-→ to inclusion of safe signal reduction
+- Incident history
+- Pattern matching
 
-#### Reasoning:
-SOC analysts do not rely on single signals; they aggregate multiple weak indicators.
+memory_agent.py
+memory/incident_memory.json
 
----
+## Phase 5 — Risk Engine
 
-## 4. Evaluation Framework
+- Risk scoring (0–100)
+- SOC reasoning
 
-We implemented a held-out evaluation dataset consisting of:
-- phishing emails
-- legitimate emails
-- edge-case ambiguous emails
+reasoning_agent.py
 
-### Metrics:
-- Accuracy: 80%
-- Evaluated via automated script (`evaluate.py`)
-- Output stored in JSON for reproducibility
+## Phase 6 — Reporting
 
-### Importance:
-This closes the major gap in the initial submission by introducing measurable performance evaluation instead of subjective testing.
+- Final SOC classification
+- JSON output
 
----
+reporting_agent.py
 
-## 5. Final System Capabilities
+# Workflow
 
-The final system includes:
-- Multi-agent SOC pipeline (LangGraph)
-- MCP-style tool abstraction layer
-- Model routing simulation
-- Structured JSON SOC reporting
-- Evaluation framework with accuracy scoring
+ioc
+↓
+threat
+↓
+memory
+↓
+reasoning
+↓
+report
 
----
+workflow = StateGraph(AgentState)
 
-## 6. Key Tradeoffs
+workflow.add_node("ioc", extract_iocs)
+workflow.add_node("threat", threat_analysis)
+workflow.add_node("memory", memory_agent)
+workflow.add_node("reasoning", reasoning_agent)
+workflow.add_node("report", reporting_agent)
 
-- Rule-based reasoning was retained for interpretability over deep ML models
-- Tool abstraction was simulated instead of fully external API-based due to scope
-- Model routing is conceptual rather than multi-provider deployment
+workflow.set_entry_point("ioc")
 
----
+workflow.add_edge("ioc", "threat")
+workflow.add_edge("threat", "memory")
+workflow.add_edge("memory", "reasoning")
+workflow.add_edge("reasoning", "report")
 
-## 7. Conclusion
+app = workflow.compile()
 
-This project demonstrates an agentic AI system that goes beyond single-shot LLM prompting by introducing:
-- structured multi-agent reasoning
-- tool-based augmentation
-- evaluation-driven iteration
-- SOC-aligned decision logic
+# Evaluation
 
-The system evolved through measurable improvements, validated via evaluation accuracy increases from initial baseline to final 80%.
+- Dataset: 400 samples
+- Phishing: 150
+- Legit: 150
+- Edge: 100
+
+# Outcome
+
+Multi-agent SOC system with explainable phishing detection and structured reasoning.

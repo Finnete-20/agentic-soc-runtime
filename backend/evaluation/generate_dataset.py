@@ -1,112 +1,75 @@
 import json
 import random
+from pathlib import Path
 
 # -----------------------------
-# Phishing patterns (varied SOC realism)
+# ALWAYS SAFE BASE PATH
 # -----------------------------
-phishing_templates = [
-    "Urgent: verify your {brand} account immediately at {link}",
-    "Your {brand} account has been suspended due to suspicious activity. login now {link}",
-    "Security alert: unauthorized login detected. confirm identity {link}",
-    "Password expired. reset immediately using {link}",
-    "Unusual activity detected on your account. verify now {link}",
-    "Your payment failed. update billing information {link}",
-    "We locked your account for safety. verify access {link}",
-    "Critical security update required. click here {link}"
-]
+BASE_DIR = Path(__file__).resolve().parent
+DATA_DIR = BASE_DIR / "data"
+
+# Ensure data folder exists
+DATA_DIR.mkdir(exist_ok=True)
 
 # -----------------------------
-# Legit patterns
+# EMAIL GENERATORS
 # -----------------------------
-legit_templates = [
-    "Hey, here is the meeting agenda for tomorrow",
-    "Your package has shipped and will arrive on Friday",
-    "Please review the attached project document",
-    "Team standup notes are attached",
-    "Lunch meeting moved to 2pm today",
-    "Here is the report you requested",
-    "Calendar invite for weekly sync",
-    "Project update: milestone completed"
-]
+def generate_email(label):
+    if label == "phishing":
+        return {
+            "email": f"Urgent: verify your account immediately at http://fake-login-{random.randint(1000,9999)}.com",
+            "label": "phishing"
+        }
 
-# -----------------------------
-# Context data
-# -----------------------------
-brands = ["PayPal", "Microsoft", "Google", "Apple", "Amazon", "Netflix", "Facebook"]
-links = [
-    "http://secure-login.com",
-    "http://verify-account.net",
-    "http://security-check.org",
-    "http://account-update.com",
-    "http://login-required.net"
-]
+    if label == "legit":
+        return {
+            "email": "Hey, your meeting is scheduled for tomorrow at 10am. Please find the agenda attached.",
+            "label": "legit"
+        }
 
-edge_cases = [
-    "Your account update may be required",
-    "Security notice regarding your login activity",
-    "Please confirm recent changes",
-    "System alert: action may be needed",
-    "We noticed unusual sign-in behavior"
-]
-
-# -----------------------------
-# Generate phishing
-# -----------------------------
-def generate_phishing(n):
-    data = []
-    for _ in range(n):
-        template = random.choice(phishing_templates)
-        email = template.format(
-            brand=random.choice(brands),
-            link=random.choice(links)
-        )
-        data.append({"email": email, "label": "phishing"})
-    return data
-
-# -----------------------------
-# Generate legit
-# -----------------------------
-def generate_legit(n):
-    data = []
-    for _ in range(n):
-        email = random.choice(legit_templates)
-        data.append({"email": email, "label": "legit"})
-    return data
-
-# -----------------------------
-# Edge cases
-# -----------------------------
-def generate_edge(n):
-    data = []
-    for _ in range(n):
-        data.append({
-            "email": random.choice(edge_cases),
+    if label == "edge":
+        return {
+            "email": "Your account activity requires review. Please check your dashboard for updates.",
             "label": "edge"
-        })
-    return data
+        }
 
 # -----------------------------
-# Save helper
+# BUILD DATASET (400 TOTAL)
 # -----------------------------
-def save(path, data):
-    with open(path, "w") as f:
-        json.dump(data, f, indent=2)
+def build_dataset():
+    phishing = [generate_email("phishing") for _ in range(150)]
+    legit = [generate_email("legit") for _ in range(150)]
+    edge = [generate_email("edge") for _ in range(100)]
+
+    return phishing, legit, edge
 
 # -----------------------------
-# MAIN
+# SAVE DATASET SAFELY
+# -----------------------------
+def save_data():
+    phishing, legit, edge = build_dataset()
+
+    phishing_path = DATA_DIR / "phishing_samples.json"
+    legit_path = DATA_DIR / "legit_samples.json"
+    edge_path = DATA_DIR / "edge_cases.json"
+
+    with open(phishing_path, "w", encoding="utf-8") as f:
+        json.dump(phishing, f, indent=2)
+
+    with open(legit_path, "w", encoding="utf-8") as f:
+        json.dump(legit, f, indent=2)
+
+    with open(edge_path, "w", encoding="utf-8") as f:
+        json.dump(edge, f, indent=2)
+
+    print("Dataset generated successfully ✅")
+    print(f"Phishing: {len(phishing)}")
+    print(f"Legit: {len(legit)}")
+    print(f"Edge: {len(edge)}")
+    print(f"TOTAL: {len(phishing) + len(legit) + len(edge)}")
+
+# -----------------------------
+# RUN
 # -----------------------------
 if __name__ == "__main__":
-
-    phishing = generate_phishing(1450)
-    legit = generate_legit(1450)
-    edge = generate_edge(100)
-
-    save("data/phishing_samples.json", phishing)
-    save("data/legit_samples.json", legit)
-    save("data/edge_cases.json", edge)
-
-    print("✅ Dataset generated:")
-    print("Phishing:", len(phishing))
-    print("Legit:", len(legit))
-    print("Edge:", len(edge))
-    print("TOTAL:", len(phishing) + len(legit) + len(edge))
+    save_data()

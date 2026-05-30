@@ -1,34 +1,36 @@
 import re
 from state import AgentState
-from model_router import route_model
 
 URL_REGEX = r'https?://[^\s]+'
 
 
 def extract_iocs(state: AgentState):
+
     email = state["email_content"]
 
-    model = route_model("ioc_extraction")
+    signals = []
 
-    # Extract ONLY real URLs
     urls = re.findall(URL_REGEX, email)
 
-    # Extract domains (important upgrade)
-    domains = []
-    for url in urls:
-        try:
-            domain = url.split("//")[1].split("/")[0]
-            domains.append(domain)
-        except:
-            pass
+    # -----------------------------
+    # STRUCTURAL SIGNAL ENGINE
+    # -----------------------------
 
-    state["extracted_iocs"] = {
-        "urls": urls,
-        "domains": domains
-    }
+    signals.append(("length", len(email)))
 
-    state["investigation_steps"].append(
-        f"IOC Agent extracted {len(urls)} URLs and {len(domains)} domains using {model}"
-    )
+    signals.append(("word_count", len(email.split())))
+
+    signals.append(("uppercase_ratio",
+                     sum(1 for c in email if c.isupper()) / max(len(email), 1)))
+
+    signals.append(("url_count", len(urls)))
+
+    signals.append(("exclamation_count", email.count("!")))
+
+    signals.append(("suspicious_density",
+                     sum(1 for w in ["urgent", "verify", "account", "login"]
+                         if w in email.lower())))
+
+    state["extracted_iocs"] = signals
 
     return state
