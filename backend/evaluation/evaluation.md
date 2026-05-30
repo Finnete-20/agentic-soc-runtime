@@ -68,8 +68,11 @@ Final Classification Output
 ### Outputs:
 
 Risk score (0–100)
+
 Final classification (legit / suspicious / phishing)
+
 Investigation trace
+
 Threat intelligence signals
 
 ## 4.2 Baseline System

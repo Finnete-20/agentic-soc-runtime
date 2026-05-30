@@ -152,9 +152,9 @@ workflow.add_edge("memory", "reasoning")
 workflow.add_edge("reasoning", "report")
 
 app = workflow.compile()
-'''
+```
 
-Repository Structure
+### Repository Structure
 agentic-soc-runtime/
 │
 ├── backend/
@@ -207,7 +207,7 @@ traceable reasoning
 modular intelligence
 Why Tool Abstraction
 
-Real SOC systems rely on external tools such as:
+## Real SOC systems rely on external tools such as:
 
 VirusTotal
 AbuseIPDB
@@ -217,7 +217,7 @@ This system simulates that design pattern.
 
 Why Memory Layer
 
-Security analysis improves when:
+## Security analysis improves when:
 
 past incidents are reused
 patterns are recognized

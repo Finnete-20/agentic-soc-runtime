@@ -111,7 +111,7 @@ workflow.add_edge("memory", "reasoning")
 workflow.add_edge("reasoning", "report")
 
 app = workflow.compile()
-'''
+```
 ## Tech Stack
 
 Python
@@ -120,7 +120,7 @@ LangGraph
 React
 TailwindCSS
 
-How to Run
+## How to Run
 
 Backend:
 
@@ -134,12 +134,12 @@ cd frontend
 npm install
 npm run dev
 
-Evaluation:
+## Evaluation:
 
 cd backend
 python evaluate.py
 
-Purpose
+## Purpose
 
 This system demonstrates:
 
