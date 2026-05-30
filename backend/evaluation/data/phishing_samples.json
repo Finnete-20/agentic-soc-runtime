@@ -1,0 +1,10 @@
+[
+  {
+    "email": "Urgent: verify your PayPal account at http://paypal-secure-login.com",
+    "label": "phishing"
+  },
+  {
+    "email": "Your Microsoft account has been locked. login now http://secure-microsoft-login.net",
+    "label": "phishing"
+  }
+]

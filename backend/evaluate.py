@@ -1,27 +1,28 @@
 import json
 from runtime_graph import app as agent_app
 
-# -----------------------
-# Load test dataset
-# -----------------------
-def load_samples():
-    with open("evaluation/phishing_samples.json", "r") as f:
+# -----------------------------
+# Load dataset
+# -----------------------------
+def load_data():
+    with open("evaluation/data/phishing_samples.json") as f:
         phishing = json.load(f)
 
-    with open("evaluation/legit_samples.json", "r") as f:
+    with open("evaluation/data/legit_samples.json") as f:
         legit = json.load(f)
 
     return phishing + legit
 
 
-# -----------------------
-# Run model
-# -----------------------
-def run_agent(email):
+# -----------------------------
+# Run full agent system
+# -----------------------------
+def run_full_system(email):
     state = {
         "email_content": email,
         "extracted_iocs": [],
         "threat_data": {},
+        "memory_matches": [],
         "risk_score": 0,
         "investigation_steps": [],
         "final_report": {}
@@ -31,28 +32,51 @@ def run_agent(email):
     return result
 
 
-# -----------------------
-# Evaluate system
-# -----------------------
+# -----------------------------
+# Simple baseline (NO AGENTS)
+# -----------------------------
+def run_baseline(email):
+    # naive heuristic baseline
+    keywords = ["urgent", "verify", "login", "password", "http"]
+
+    score = sum(1 for k in keywords if k in email.lower())
+
+    if score >= 2:
+        return "phishing"
+    return "legit"
+
+
+# -----------------------------
+# Evaluation loop
+# -----------------------------
 def evaluate():
-    samples = load_samples()
+    data = load_data()
 
-    correct = 0
-    total = len(samples)
+    full_correct = 0
+    base_correct = 0
 
-    for sample in samples:
-        result = run_agent(sample["email"])
+    for item in data:
+        email = item["email"]
+        label = item["label"]
 
-        predicted = result["final_report"].get("verdict")
-        actual = sample["label"]
+        # FULL SYSTEM
+        result = run_full_system(email)
+        predicted_full = result["final_report"].get("verdict", "legit")
 
-        if predicted == actual:
-            correct += 1
+        # BASELINE
+        predicted_base = run_baseline(email)
 
-    accuracy = correct / total
+        if predicted_full == label:
+            full_correct += 1
 
-    print("\n=== EVALUATION RESULTS ===")
-    print("Accuracy:", round(accuracy * 100, 2))
+        if predicted_base == label:
+            base_correct += 1
+
+    total = len(data)
+
+    print("\n=== RESULTS ===")
+    print("Full Agentic Accuracy:", round(full_correct / total * 100, 2))
+    print("Baseline Accuracy:", round(base_correct / total * 100, 2))
 
 
 if __name__ == "__main__":
