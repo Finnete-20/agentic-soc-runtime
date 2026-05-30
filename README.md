@@ -57,7 +57,7 @@ This reflects real SOC analyst decision-making.
 
 ### System Flow
 
-
+```
 Email Input
 ↓
 IOC Extraction Agent
@@ -71,6 +71,7 @@ Risk Reasoning Engine
 SOC Reporting Agent
 ↓
 Final Classification Output
+```
 
 
 ---
