@@ -32,11 +32,11 @@ The evaluation dataset contains 400 total samples:
 | Legitimate   | Safe email samples           | 150     |
 | Edge Cases   | Ambiguous security emails    | 100     |
 | **Total**    | Held-out evaluation dataset  | **400** |
----
+
 ## Dataset location:
 
-
 backend/evaluation/data/
+
 ---
 
 ## 4. Evaluation Methodology
