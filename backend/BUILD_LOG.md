@@ -154,7 +154,9 @@ workflow.add_edge("reasoning", "report")
 app = workflow.compile()
 ```
 
-### Repository Structure
+## Repository Structure
+
+```text
 agentic-soc-runtime/
 │
 ├── backend/
@@ -199,7 +201,7 @@ agentic-soc-runtime/
 ├── README.md
 ├── BUILD_LOG.md
 └── .gitignore
-'''
+```
 ## SOC workflows are naturally multi-step and require:
 
 decomposition of tasks
