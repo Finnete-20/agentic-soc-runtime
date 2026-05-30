@@ -5,39 +5,46 @@ def reasoning_agent(state: AgentState):
 
     threat_data = state.get("threat_data", {})
     memory_hits = state.get("memory_matches", [])
+    signals = state.get("phishing_signals", [])
 
     risk = 0
 
     # -------------------------
-    # Threat intelligence scoring
+    # URL threat intelligence
     # -------------------------
     for url, result in threat_data.items():
-        # ensure safe extraction
         if isinstance(result, dict):
-            risk += result.get("risk_score", 0)
+            # reachable phishing domains = strong signal
+            if result.get("reachable"):
+                risk += 30
+            else:
+                risk += 10
 
     # -------------------------
-    # Memory boost (VERY IMPORTANT)
+    # MEMORY SIGNAL (adaptive boost)
     # -------------------------
     if memory_hits:
-        risk += 25
-        state["investigation_steps"].append(
-            "Memory match found → +25 risk boost"
-        )
+        risk += min(30, len(memory_hits) * 15)
 
     # -------------------------
-    # IOC heuristic boost
+    # IOC URL presence
     # -------------------------
-    if state["extracted_iocs"]:
-        risk += len(state["extracted_iocs"]) * 5
+    risk += len(state.get("extracted_iocs", [])) * 20
 
-    # clamp risk
-    risk = min(100, risk)
+    # -------------------------
+    # PHISHING LANGUAGE SIGNALS (IMPORTANT FIX)
+    # -------------------------
+    risk += len(signals) * 6
+
+    # -------------------------
+    # clamp
+    # -------------------------
+    risk = max(0, min(100, risk))
 
     state["risk_score"] = risk
 
     state["investigation_steps"].append(
-        f"Reasoning Agent computed final risk: {risk}"
+        f"Reasoning Agent computed calibrated risk: {risk}"
     )
 
     return state

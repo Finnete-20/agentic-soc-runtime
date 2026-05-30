@@ -1,0 +1,22 @@
+[
+  {
+    "email": "IT Notice: Please confirm your password in the internal portal within 24 hours.",
+    "label": "suspicious"
+  },
+  {
+    "email": "Security team: We detected unusual login activity. If this was you, ignore this message.",
+    "label": "suspicious"
+  },
+  {
+    "email": "HR update: Please review your benefits portal for updated information.",
+    "label": "legit"
+  },
+  {
+    "email": "Your account security settings have been updated successfully.",
+    "label": "legit"
+  },
+  {
+    "email": "System alert: Verify your identity to avoid service interruption.",
+    "label": "suspicious"
+  }
+]

@@ -2,12 +2,13 @@ from state import AgentState
 
 
 def reporting_agent(state: AgentState):
+
     risk = state["risk_score"]
 
-    # SOC-style classification thresholds
-    if risk >= 70:
+    # FIXED SOC THRESHOLDS
+    if risk >= 60:
         verdict = "phishing"
-    elif risk >= 40:
+    elif risk >= 30:
         verdict = "suspicious"
     else:
         verdict = "legit"
@@ -15,13 +16,15 @@ def reporting_agent(state: AgentState):
     state["final_report"] = {
         "verdict": verdict,
         "risk_score": risk,
-        "iocs": state["extracted_iocs"],
-        "threat_data": state["threat_data"],
+        "iocs": state.get("extracted_iocs", []),
+        "signals": state.get("phishing_signals", []),
+        "threat_data": state.get("threat_data", {}),
+        "memory_hits": len(state.get("memory_matches", [])),
         "investigation_steps": state["investigation_steps"]
     }
 
     state["investigation_steps"].append(
-        "Reporting Agent applied SOC classification thresholds"
+        "Reporting Agent applied calibrated SOC thresholds"
     )
 
     return state

@@ -7,24 +7,38 @@ def memory_agent(state):
     matches = []
 
     try:
-
         with open(MEMORY_FILE, "r") as f:
             memory = json.load(f)
 
-        for ioc in state["extracted_iocs"]:
+        email_text = state["email_content"].lower()
 
-            for incident in memory:
+        for incident in memory:
+            domain = incident.get("domain", "")
 
-                if incident["domain"] in ioc:
-                    matches.append(incident)
+            # URL match
+            url_match = any(domain in ioc for ioc in state["extracted_iocs"])
+
+            # keyword pattern match (IMPORTANT FIX)
+            pattern_match = any(
+                kw in email_text
+                for kw in incident.get("patterns", [])
+            )
+
+            if url_match or pattern_match:
+                matches.append(incident)
 
     except Exception:
         pass
 
     state["memory_matches"] = matches
 
-    state["investigation_steps"].append(
-        f"Memory Agent searched {len(matches)} historical incidents"
-    )
+    if matches:
+        state["investigation_steps"].append(
+            f"Memory Agent found {len(matches)} historical attack patterns"
+        )
+    else:
+        state["investigation_steps"].append(
+            "Memory Agent found no relevant historical matches"
+        )
 
     return state

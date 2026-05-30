@@ -8,12 +8,14 @@ def threat_analysis(state: AgentState):
     results = {}
 
     for url in urls:
-        results[url] = url_reputation_check(url)
+        # only real URLs
+        if url.startswith("http"):
+            results[url] = url_reputation_check(url)
 
     state["threat_data"] = results
 
     state["investigation_steps"].append(
-        "Threat Agent used MCP-style tool registry for URL analysis"
+        "Threat Agent analyzed URL reputation signals"
     )
 
     return state

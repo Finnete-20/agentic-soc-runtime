@@ -1,10 +1,22 @@
 [
-  {
-    "email": "Urgent: verify your PayPal account at http://paypal-secure-login.com",
-    "label": "phishing"
-  },
-  {
-    "email": "Your Microsoft account has been locked. login now http://secure-microsoft-login.net",
-    "label": "phishing"
-  }
+  { "email": "Urgent: verify your PayPal account at http://paypal-secure-login.com", "label": "phishing" },
+  { "email": "Your Microsoft account has been locked. login now http://secure-microsoft-login.net", "label": "phishing" },
+  { "email": "Apple ID suspended. Click http://apple-security-reset.com immediately", "label": "phishing" },
+  { "email": "Bank alert: unauthorized login detected. Confirm at http://bank-secure-login.com", "label": "phishing" },
+  { "email": "Your Netflix account will be disabled. Verify at http://netflix-billing-update.com", "label": "phishing" },
+  { "email": "Urgent security alert: reset your password now http://security-reset-login.com", "label": "phishing" },
+  { "email": "We detected suspicious activity. Login to secure your account http://verify-now-login.com", "label": "phishing" },
+  { "email": "Your email storage is full. Upgrade now http://storage-upgrade-alert.com", "label": "phishing" },
+  { "email": "Tax refund available. Claim now http://irs-refund-portal.com", "label": "phishing" },
+  { "email": "Your bank account is suspended. Verify identity http://bank-verify-login.com", "label": "phishing" },
+  { "email": "Security alert: unknown device login detected http://device-check-login.com", "label": "phishing" },
+  { "email": "Confirm delivery address immediately http://delivery-update-login.com", "label": "phishing" },
+  { "email": "Your PayPal account requires verification http://paypal-login-verify.com", "label": "phishing" },
+  { "email": "We blocked suspicious transaction. Confirm now http://transaction-security.com", "label": "phishing" },
+  { "email": "Account locked due to unusual activity http://account-security-reset.com", "label": "phishing" },
+  { "email": "Update your billing information http://billing-update-secure.com", "label": "phishing" },
+  { "email": "Microsoft security alert: verify identity http://microsoft-secure-verify.com", "label": "phishing" },
+  { "email": "Your Dropbox access is suspended http://dropbox-security-login.com", "label": "phishing" },
+  { "email": "Unusual login attempt detected http://login-security-check.com", "label": "phishing" },
+  { "email": "Your account has been flagged for review http://account-review-security.com", "label": "phishing" }
 ]
