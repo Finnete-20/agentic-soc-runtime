@@ -1,0 +1,16 @@
+{
+  "accuracy": {
+    "agentic": 48.333333333333336,
+    "baseline": 68.23333333333333
+  },
+  "confusion": {
+    "('phishing', 'legit')": 1450,
+    "('legit', 'legit')": 1450,
+    "('edge', 'legit')": 100
+  },
+  "risk_distribution": {
+    "low": 3000,
+    "medium": 0,
+    "high": 0
+  }
+}

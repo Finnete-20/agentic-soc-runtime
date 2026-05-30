@@ -1,76 +1,112 @@
 import json
 import random
-import os
 
-os.makedirs("data", exist_ok=True)
-
-# ----------------------------
-# Templates
-# ----------------------------
+# -----------------------------
+# Phishing patterns (varied SOC realism)
+# -----------------------------
 phishing_templates = [
-    "Urgent: verify your account at http://fake-login{0}.com",
-    "Your account has been suspended. login immediately http://secure{0}.net",
-    "Action required: confirm password at http://update{0}.org",
-    "PayPal alert: verify identity http://paypal-secure{0}.com",
-    "Microsoft security alert: login here http://microsoft-secure{0}.net"
+    "Urgent: verify your {brand} account immediately at {link}",
+    "Your {brand} account has been suspended due to suspicious activity. login now {link}",
+    "Security alert: unauthorized login detected. confirm identity {link}",
+    "Password expired. reset immediately using {link}",
+    "Unusual activity detected on your account. verify now {link}",
+    "Your payment failed. update billing information {link}",
+    "We locked your account for safety. verify access {link}",
+    "Critical security update required. click here {link}"
 ]
 
+# -----------------------------
+# Legit patterns
+# -----------------------------
 legit_templates = [
-    "Hey, meeting is scheduled for tomorrow at 10am",
-    "Your package will arrive on Friday via UPS",
+    "Hey, here is the meeting agenda for tomorrow",
+    "Your package has shipped and will arrive on Friday",
     "Please review the attached project document",
-    "Lunch meeting moved to next week",
-    "Here is the report you requested"
+    "Team standup notes are attached",
+    "Lunch meeting moved to 2pm today",
+    "Here is the report you requested",
+    "Calendar invite for weekly sync",
+    "Project update: milestone completed"
 ]
 
-edge_templates = [
-    "Your account activity summary is available",
-    "We noticed unusual sign-in activity, please review",
-    "Team update: please check recent changes in your account"
+# -----------------------------
+# Context data
+# -----------------------------
+brands = ["PayPal", "Microsoft", "Google", "Apple", "Amazon", "Netflix", "Facebook"]
+links = [
+    "http://secure-login.com",
+    "http://verify-account.net",
+    "http://security-check.org",
+    "http://account-update.com",
+    "http://login-required.net"
 ]
 
-# ----------------------------
-# Builders
-# ----------------------------
-def make_phishing(i):
-    return {
-        "email": random.choice(phishing_templates).format(i),
-        "label": "phishing"
-    }
+edge_cases = [
+    "Your account update may be required",
+    "Security notice regarding your login activity",
+    "Please confirm recent changes",
+    "System alert: action may be needed",
+    "We noticed unusual sign-in behavior"
+]
 
-def make_legit(i):
-    return {
-        "email": random.choice(legit_templates),
-        "label": "legit"
-    }
+# -----------------------------
+# Generate phishing
+# -----------------------------
+def generate_phishing(n):
+    data = []
+    for _ in range(n):
+        template = random.choice(phishing_templates)
+        email = template.format(
+            brand=random.choice(brands),
+            link=random.choice(links)
+        )
+        data.append({"email": email, "label": "phishing"})
+    return data
 
-def make_edge(i):
-    return {
-        "email": random.choice(edge_templates),
-        "label": "edge_case"
-    }
+# -----------------------------
+# Generate legit
+# -----------------------------
+def generate_legit(n):
+    data = []
+    for _ in range(n):
+        email = random.choice(legit_templates)
+        data.append({"email": email, "label": "legit"})
+    return data
 
-# ----------------------------
-# Generate dataset (300 total target)
-# ----------------------------
-phishing = [make_phishing(i) for i in range(150)]
-legit = [make_legit(i) for i in range(150)]
-edge = [make_edge(i) for i in range(30)]
+# -----------------------------
+# Edge cases
+# -----------------------------
+def generate_edge(n):
+    data = []
+    for _ in range(n):
+        data.append({
+            "email": random.choice(edge_cases),
+            "label": "edge"
+        })
+    return data
 
-# ----------------------------
-# Save files
-# ----------------------------
-with open("data/phishing_samples.json", "w") as f:
-    json.dump(phishing, f, indent=2)
+# -----------------------------
+# Save helper
+# -----------------------------
+def save(path, data):
+    with open(path, "w") as f:
+        json.dump(data, f, indent=2)
 
-with open("data/legit_samples.json", "w") as f:
-    json.dump(legit, f, indent=2)
+# -----------------------------
+# MAIN
+# -----------------------------
+if __name__ == "__main__":
 
-with open("data/edge_cases.json", "w") as f:
-    json.dump(edge, f, indent=2)
+    phishing = generate_phishing(1450)
+    legit = generate_legit(1450)
+    edge = generate_edge(100)
 
-print("✅ Dataset generated:")
-print("Phishing:", len(phishing))
-print("Legit:", len(legit))
-print("Edge:", len(edge))
-print("TOTAL:", len(phishing) + len(legit) + len(edge))
+    save("data/phishing_samples.json", phishing)
+    save("data/legit_samples.json", legit)
+    save("data/edge_cases.json", edge)
+
+    print("✅ Dataset generated:")
+    print("Phishing:", len(phishing))
+    print("Legit:", len(legit))
+    print("Edge:", len(edge))
+    print("TOTAL:", len(phishing) + len(legit) + len(edge))

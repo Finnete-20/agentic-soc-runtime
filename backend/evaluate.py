@@ -1,8 +1,9 @@
 import json
+from collections import defaultdict
 from runtime_graph import app as agent_app
 
 # -----------------------------
-# Load dataset
+# LOAD DATASET
 # -----------------------------
 def load_data():
     with open("evaluation/data/phishing_samples.json") as f:
@@ -11,11 +12,14 @@ def load_data():
     with open("evaluation/data/legit_samples.json") as f:
         legit = json.load(f)
 
-    return phishing + legit
+    with open("evaluation/data/edge_cases.json") as f:
+        edge = json.load(f)
+
+    return phishing + legit + edge
 
 
 # -----------------------------
-# Run full agent system
+# RUN SYSTEM
 # -----------------------------
 def run_full_system(email):
     state = {
@@ -28,73 +32,121 @@ def run_full_system(email):
         "final_report": {}
     }
 
-    result = agent_app.invoke(state)
-    return result
+    return agent_app.invoke(state)
 
 
 # -----------------------------
-# Baseline model (simple heuristic)
+# BASELINE
 # -----------------------------
 def run_baseline(email):
     keywords = ["urgent", "verify", "login", "password", "account", "click", "suspended"]
-
     score = sum(1 for k in keywords if k in email.lower())
-
-    if score >= 3:
-        return "phishing"
-    return "legit"
+    return "phishing" if score >= 3 else "legit"
 
 
 # -----------------------------
-# Normalize SOC outputs
+# NORMALIZATION (SOC STYLE)
 # -----------------------------
-def normalize(verdict):
-    if verdict == "phishing":
-        return "phishing"
-    if verdict == "suspicious":
-        return "phishing"
-    return "legit"
+def normalize(verdict, risk=None):
+    if risk is not None:
+        if risk >= 60:
+            return "phishing"
+        if risk >= 30:
+            return "suspicious"
+        return "legit"
+
+    return "legit" if verdict == "legit" else "phishing"
 
 
 # -----------------------------
-# Evaluation loop
+# MAIN EVALUATION
 # -----------------------------
 def evaluate():
     data = load_data()
 
-    full_correct = 0
-    base_correct = 0
+    results = {
+        "total": len(data),
+        "full_correct": 0,
+        "baseline_correct": 0,
+        "confusion": defaultdict(int),
+        "risk_buckets": {"low": 0, "medium": 0, "high": 0}
+    }
 
-    for item in data:
+    print(f"\nRunning SOC evaluation on {len(data)} samples...\n")
+
+    for i, item in enumerate(data):
         email = item["email"]
         label = item["label"]
 
         # FULL SYSTEM
         result = run_full_system(email)
-        predicted_full = result["final_report"].get("verdict", "legit")
+        report = result["final_report"]
+
+        predicted = report.get("verdict", "legit")
+        risk = report.get("risk_score", 0)
 
         # BASELINE
-        predicted_base = run_baseline(email)
+        baseline = run_baseline(email)
 
-        # Evaluate full system
-        if normalize(predicted_full) == label:
-            full_correct += 1
+        # NORMALIZED
+        final_pred = normalize(predicted, risk)
 
-        # Evaluate baseline
-        if predicted_base == label:
-            base_correct += 1
+        # -----------------------------
+        # METRICS
+        # -----------------------------
+        if final_pred == label:
+            results["full_correct"] += 1
 
-    total = len(data)
+        if baseline == label:
+            results["baseline_correct"] += 1
 
-    full_acc = round((full_correct / total) * 100, 2)
-    base_acc = round((base_correct / total) * 100, 2)
+        # confusion tracking
+        results["confusion"][(label, final_pred)] += 1
 
+        # risk buckets
+        if risk >= 60:
+            results["risk_buckets"]["high"] += 1
+        elif risk >= 30:
+            results["risk_buckets"]["medium"] += 1
+        else:
+            results["risk_buckets"]["low"] += 1
+
+        if i % 200 == 0:
+            print(f"Processed {i}/{len(data)} samples...")
+
+    # -----------------------------
+    # FINAL SCORES
+    # -----------------------------
+    total = results["total"]
+
+    full_acc = results["full_correct"] / total * 100
+    base_acc = results["baseline_correct"] / total * 100
+
+    # -----------------------------
+    # PRINT REPORT
+    # -----------------------------
     print("\n=== RESULTS ===")
-    print(f"Full Agentic Accuracy: {full_acc}%")
-    print(f"Baseline Accuracy: {base_acc}%")
+    print(f"Full Agentic Accuracy: {full_acc:.2f}%")
+    print(f"Baseline Accuracy: {base_acc:.2f}%")
+
+    print("\n=== SOC ANALYSIS ===")
+    print("Risk Distribution:", dict(results["risk_buckets"]))
 
     print("\n=== SUMMARY ===")
-    print(f"Improvement: {round(full_acc - base_acc, 2)}%")
+    print(f"Improvement: {full_acc - base_acc:.2f}%")
+
+    # -----------------------------
+    # SAVE REPORT (IMPORTANT)
+    # -----------------------------
+    with open("evaluation/evaluation_report.json", "w") as f:
+        json.dump({
+            "accuracy": {
+                "agentic": full_acc,
+                "baseline": base_acc
+            },
+            "confusion": {str(k): v for k, v in results["confusion"].items()},
+            "risk_distribution": results["risk_buckets"]
+        }, f, indent=2)
 
 
 if __name__ == "__main__":
