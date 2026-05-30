@@ -33,4 +33,8 @@ def investigate(email: EmailInput):
 
     result = agent_app.invoke(state)
 
-    return result["final_report"]
+    return result.get("final_report", {
+        "classification": "unknown",
+        "risk_score": 0,
+        "message": "No report generated"
+    })
