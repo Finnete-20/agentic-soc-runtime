@@ -205,8 +205,11 @@ agentic-soc-runtime/
 ## SOC workflows are naturally multi-step and require:
 
 decomposition of tasks
+
 traceable reasoning
+
 modular intelligence
+
 Why Tool Abstraction
 
 ## Real SOC systems rely on external tools such as:

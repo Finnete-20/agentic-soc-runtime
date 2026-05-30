@@ -92,17 +92,24 @@ keywords = [
 Characteristics:
 
 No reasoning
+
 No memory
+
 No tool usage
+
 Pure keyword matching
 ## 5. Metrics Used
 
 The evaluation framework measures:
 
 Accuracy
+
 Risk score distribution
+
 Confusion patterns
+
 Edge-case classification behavior
+
 Baseline comparison gap
 ## 6. Risk Scoring Model
 
@@ -125,6 +132,8 @@ Produces structured SOC-style reports
 Handles ambiguity using "suspicious" classification
 Uses multi-step reasoning across agents
 Incorporates threat intelligence and memory signals
+
+
 8.2 Baseline System
 Performs well on obvious phishing emails
 Fails on contextual or obfuscated attacks
@@ -132,19 +141,31 @@ No reasoning or memory capability
 Over-reliance on keyword matching
 ## 9. Error Analysis
 Agentic System Behavior
+
 Borderline cases are often classified as "suspicious"
+
 This reflects realistic SOC analyst behavior
+
 Prioritizes caution over binary decision-making
+
 Baseline Limitations
+
 No contextual understanding
+
 No historical memory
+
 No adaptive reasoning
+
 Poor handling of edge cases
 ## 10. Key Findings
 Multi-agent reasoning improves consistency
+
 Memory improves detection of repeated patterns
+
 Threat intelligence enhances signal quality
+
 Structured workflow improves explainability
+
 Baseline is limited to shallow keyword detection
 ## 11. Conclusion
 

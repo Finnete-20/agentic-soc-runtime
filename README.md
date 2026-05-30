@@ -117,9 +117,13 @@ app = workflow.compile()
 ## Tech Stack
 
 Python
+
 FastAPI
+
 LangGraph
+
 React
+
 TailwindCSS
 
 ## How to Run
