@@ -58,19 +58,33 @@ This reflects real SOC analyst decision-making.
 ### System Flow
 
 ```
-Email Input
-↓
-IOC Extraction Agent
-↓
-Threat Intelligence Tool Layer
-↓
-Memory Lookup Agent
-↓
-Risk Reasoning Engine
-↓
-SOC Reporting Agent
-↓
-Final Classification Output
+┌───────────────┐
+│ Email Input   │
+└──────┬────────┘
+       ↓
+┌───────────────┐
+│ IOC Extraction │
+└──────┬────────┘
+       ↓
+┌────────────────────────────┐
+│ Threat Intelligence Layer  │
+└──────┬─────────────────────┘
+       ↓
+┌────────────────────────────┐
+│ Memory Lookup Agent        │
+└──────┬─────────────────────┘
+       ↓
+┌────────────────────────────┐
+│ Risk Reasoning Engine      │
+└──────┬─────────────────────┘
+       ↓
+┌────────────────────────────┐
+│ SOC Reporting Agent        │
+└──────┬─────────────────────┘
+       ↓
+┌────────────────────────────┐
+│ Final Classification       │
+└────────────────────────────┘
 ```
 
 
@@ -88,16 +102,19 @@ Final Classification Output
 | SOC Reporting Agent | `reporting_agent.py` |
 
 ---
-
 ## LangGraph Workflow
 
-The system is implemented using LangGraph:
+The system is implemented using **LangGraph**, enabling a structured multi-agent pipeline for SOC-style phishing analysis.
 
+### Workflow Execution Order
 
+```
 ioc → threat → memory → reasoning → report
+```
 
+---
 
-Defined in:
+### Graph Definition
 
 ```python
 workflow = StateGraph(AgentState)
@@ -116,73 +133,118 @@ workflow.add_edge("memory", "reasoning")
 workflow.add_edge("reasoning", "report")
 
 app = workflow.compile()
-Evaluation
+```
 
-The system is evaluated using a held-out dataset containing:
+---
 
-Phishing emails
-Legitimate emails
-Edge-case ambiguous emails
-Evaluation Method
+## Evaluation
+
+The system is evaluated using a **held-out dataset** containing:
+
+- Phishing emails  
+- Legitimate emails  
+- Edge-case ambiguous emails  
+
+---
+
+## Evaluation Method
 
 Each sample is processed through:
 
-Full agentic SOC pipeline
-Baseline keyword-based classifier
-Baseline Model
+- Full agentic SOC pipeline  
+- Baseline keyword-based classifier  
+
+---
+
+## Baseline Model
 
 A simple heuristic classifier:
 
+```python
 keywords = ["urgent", "verify", "login", "password", "account", "click", "suspended"]
-Metrics
-Accuracy
-Risk distribution
-Confusion analysis
-Edge-case behavior analysis
-Results
-System	Performance
-Agentic SOC System	~70–85% (varies with dataset complexity)
-Baseline Keyword Model	~60–75%
-Key Insight
+```
+
+---
+
+## Metrics
+
+- Accuracy  
+- Risk distribution  
+- Confusion analysis  
+- Edge-case behavior analysis  
+
+---
+
+## Results
+
+| System | Performance |
+|--------|------------|
+| Agentic SOC System | ~70–85% (varies with dataset complexity) |
+| Baseline Keyword Model | ~60–75% |
+
+---
+
+## Key Insight
 
 The agentic system prioritizes:
 
-explainability
-structured reasoning
-SOC-aligned decision making
+- explainability  
+- structured reasoning  
+- SOC-aligned decision making  
 
 rather than pure keyword-based accuracy.
 
 This makes it more realistic for Security Operations Center workflows.
 
-Strengths
-Multi-agent reasoning pipeline
-Tool-based threat intelligence abstraction
-Memory-enhanced detection capability
-Structured SOC reporting output
-Extensible architecture for production systems
-Limitations
-Heavily rule-based (not ML-trained)
-Synthetic dataset bias affects evaluation
-Limited real-world threat intelligence integration
-Baseline model may outperform on simple keyword datasets
-How to Run
-Backend Setup
+---
+
+## Strengths
+
+- Multi-agent reasoning pipeline  
+- Tool-based threat intelligence abstraction  
+- Memory-enhanced detection capability  
+- Structured SOC reporting output  
+- Extensible architecture for production systems  
+
+---
+
+## Limitations
+
+- Heavily rule-based (not ML-trained)  
+- Synthetic dataset bias affects evaluation  
+- Limited real-world threat intelligence integration  
+- Baseline model may outperform on simple keyword datasets  
+
+---
+
+## How to Run
+
+### Backend Setup
+
+```bash
 cd backend
 pip install -r requirements.txt
 uvicorn main:api --reload
-Future Improvements
-Integration with real threat intelligence APIs (VirusTotal, AbuseIPDB)
-Embedding-based phishing detection model
-Confusion matrix + ROC-AUC evaluation
-SOC dashboard visualization UI
-Real email ingestion pipeline (IMAP/Gmail API)
-Conclusion
+```
 
-This project demonstrates a prototype SOC agent system that applies:
+---
 
-multi-agent reasoning
-tool-augmented intelligence
-structured security workflows
+## Future Improvements
 
-It is designed as a foundation for AI-assisted Security Operations Centers, focusing on explainability, modularity, and real-world SOC behavior rather than purely statistical accuracy.
+- Integration with real threat intelligence APIs (VirusTotal, AbuseIPDB)  
+- Embedding-based phishing detection model  
+- Confusion matrix + ROC-AUC evaluation  
+- SOC dashboard visualization UI  
+- Real email ingestion pipeline (IMAP/Gmail API)  
+
+---
+
+## Conclusion
+
+This project demonstrates a **prototype SOC agent system** that applies:
+
+- multi-agent reasoning  
+- tool-augmented intelligence  
+- structured security workflows  
+
+It is designed as a foundation for **AI-assisted Security Operations Centers**, focusing on explainability, modularity, and real-world SOC behavior rather than purely statistical accuracy.
