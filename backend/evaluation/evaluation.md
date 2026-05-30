@@ -32,16 +32,18 @@ The evaluation dataset contains 400 total samples:
 | Legitimate   | Safe email samples           | 150     |
 | Edge Cases   | Ambiguous security emails    | 100     |
 | **Total**    | Held-out evaluation dataset  | **400** |
+---
+## Dataset location:
 
-Dataset location:
 
-```text
 backend/evaluation/data/
-4. Evaluation Methodology
+---
+
+## 4. Evaluation Methodology
 
 Each sample is processed using two systems:
 
-4.1 Agentic SOC System
+## 4.1 Agentic SOC System
 
 The full pipeline:
 
@@ -53,7 +55,8 @@ Risk score (0–100)
 Final classification (legit / suspicious / phishing)
 Investigation trace
 Threat intelligence signals
-4.2 Baseline System
+---
+## 4.2 Baseline System
 
 A rule-based classifier using keyword heuristics:
 
@@ -73,7 +76,7 @@ No reasoning
 No memory
 No tool usage
 Pure keyword matching
-5. Metrics Used
+## 5. Metrics Used
 
 The evaluation framework measures:
 
@@ -82,7 +85,7 @@ Risk score distribution
 Confusion patterns
 Edge-case classification behavior
 Baseline comparison gap
-6. Risk Scoring Model
+## 6. Risk Scoring Model
 
 The system uses a SOC-aligned risk scoring approach:
 
@@ -93,11 +96,11 @@ Risk Score	Classification
 
 This enables gradient-based reasoning instead of binary classification.
 
-7. Key Results Summary
+## 7. Key Results Summary
 System	Performance
 Agentic SOC System	70–85% (varies by dataset complexity)
 Baseline Classifier	60–75%
-8. Key Observations
+## 8. Key Observations
 8.1 Agentic SOC System
 Produces structured SOC-style reports
 Handles ambiguity using "suspicious" classification
@@ -108,7 +111,7 @@ Performs well on obvious phishing emails
 Fails on contextual or obfuscated attacks
 No reasoning or memory capability
 Over-reliance on keyword matching
-9. Error Analysis
+## 9. Error Analysis
 Agentic System Behavior
 Borderline cases are often classified as "suspicious"
 This reflects realistic SOC analyst behavior
@@ -118,13 +121,13 @@ No contextual understanding
 No historical memory
 No adaptive reasoning
 Poor handling of edge cases
-10. Key Findings
+## 10. Key Findings
 Multi-agent reasoning improves consistency
 Memory improves detection of repeated patterns
 Threat intelligence enhances signal quality
 Structured workflow improves explainability
 Baseline is limited to shallow keyword detection
-11. Conclusion
+## 11. Conclusion
 
 The Agentic SOC Phishing Detection System demonstrates a structured, explainable approach to phishing detection using multi-agent reasoning.
 

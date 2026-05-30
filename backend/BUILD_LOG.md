@@ -152,6 +152,7 @@ workflow.add_edge("memory", "reasoning")
 workflow.add_edge("reasoning", "report")
 
 app = workflow.compile()
+'''
 
 Repository Structure
 agentic-soc-runtime/
@@ -198,8 +199,8 @@ agentic-soc-runtime/
 ├── README.md
 ├── BUILD_LOG.md
 └── .gitignore
-
-SOC workflows are naturally multi-step and require:
+'''
+## SOC workflows are naturally multi-step and require:
 
 decomposition of tasks
 traceable reasoning
