@@ -225,7 +225,12 @@ npm run dev
 
 ### Evaluation
 cd backend
+
 python evaluate.py
+
+backend/evaluation/evaluation.md
+
+backend/evaluation/data
 
 ---
 
