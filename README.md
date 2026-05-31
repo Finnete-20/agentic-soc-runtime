@@ -224,7 +224,6 @@ npm run dev
 ---
 
 ### Evaluation
-cd backend
 
 python evaluate.py
 
