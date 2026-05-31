@@ -4,9 +4,9 @@ from pydantic import BaseModel
 
 from runtime_graph import app as agent_app
 
-api = FastAPI()
+app = FastAPI()
 
-api.add_middleware(
+app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=True,
@@ -19,7 +19,7 @@ class EmailInput(BaseModel):
     email_content: str
 
 
-@api.post("/investigate")
+@app.post("/investigate")
 def investigate(email: EmailInput):
 
     state = {
