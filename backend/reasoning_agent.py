@@ -1,46 +1,73 @@
 def reasoning_agent(state):
+    threat = state.get("threat", {})
+    memory = state.get("memory", {})
 
-    email = state["email"].lower()
+    base_score = threat.get("base_score", 0)
+    memory_score = memory.get("memory_score", 0)
 
-    signals = []
+    score = min(base_score + memory_score, 100)
+
+    signals = threat.get("signals", [])
     soc_report = []
 
-    score = state["threat"]["base_score"]
-
-    if "forms.gle" in email:
-        signals.append("google_forms_link")
-        soc_report.append("Google Forms link detected")
-        score += 15
-
-    if "@gmail.com" in email:
-        signals.append("external_email_domain")
-        soc_report.append("Sender uses external Gmail account")
-        score += 10
-
-    if "gvsu" in email or "grand valley" in email:
-        signals.append("institution_impersonation")
+    # Explain suspicious indicators
+    if "external_email_domain" in signals:
         soc_report.append(
-            "Email claims association with Grand Valley State University"
+            "Sender uses an external email domain rather than an institutional domain"
         )
-        score += 15
 
-    recipient_count = email.count(",")
-
-    if recipient_count > 10:
-        signals.append("bulk_recipients")
+    if "google_forms_link" in signals:
         soc_report.append(
-            "Message appears distributed to many recipients"
+            "Email contains a Google Forms link frequently used in phishing campaigns"
         )
-        score += 10
 
-    score = min(score, 100)
+    if "institution_impersonation" in signals:
+        soc_report.append(
+            "Message claims association with an educational or organizational institution"
+        )
 
-    if score >= 70:
+    if "bulk_recipients" in signals:
+        soc_report.append(
+            "Message appears distributed to multiple recipients"
+        )
+
+    if "urgency_manipulation" in signals:
+        soc_report.append(
+            "Language attempts to create urgency or pressure immediate action"
+        )
+
+    if "credential_harvesting" in signals:
+        soc_report.append(
+            "Email requests account verification or credential submission"
+        )
+
+    if "monetary_lure" in signals:
+        soc_report.append(
+            "Financial incentive or payment offer detected"
+        )
+
+    if "contains_link" in signals:
+        soc_report.append(
+            "Email contains an external hyperlink"
+        )
+
+    # Determine verdict
+    if score >= 61:
         verdict = "phishing"
-    elif score >= 35:
+    elif score >= 31:
         verdict = "suspicious"
     else:
         verdict = "legit"
+
+    # Legitimate email explanations
+    if verdict == "legit" and len(soc_report) == 0:
+        soc_report = [
+            "No credential harvesting indicators detected",
+            "No suspicious links detected",
+            "No urgency manipulation detected",
+            "No impersonation indicators detected",
+            "Message appears consistent with legitimate business communication"
+        ]
 
     return {
         **state,
