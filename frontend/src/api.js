@@ -13,9 +13,7 @@ export async function analyzeEmail(email_content) {
       body: JSON.stringify({ email_content }),
     });
 
-    const data = await res.json();
-
-    return data;
+    return await res.json();
   } catch (err) {
     return {
       verdict: "error",

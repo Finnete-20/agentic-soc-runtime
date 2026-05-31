@@ -4,4 +4,5 @@ class AgentState(TypedDict):
     email: str
     iocs: Dict[str, Any]
     reasoning: Dict[str, Any]
-    result: Dict[str, Any]
+    verdict: str
+    risk_score: int

@@ -1,11 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from runtime_graph import app as agent_app
 from pydantic import BaseModel
+from runtime_graph import app as agent_graph
 
 app = FastAPI(title="SOC Agentic System")
 
-# FIX CORS (this is why frontend breaks)
+# CORS FIX (frontend connection issue)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -27,7 +27,15 @@ def health():
 
 @app.post("/investigate")
 def investigate(payload: EmailInput):
-    result = agent_app.invoke({
+
+    result = agent_graph.invoke({
         "email": payload.email_content
     })
-    return result
+
+    # NORMALIZED OUTPUT (VERY IMPORTANT)
+    return {
+        "verdict": result.get("verdict", "unknown"),
+        "risk_score": result.get("risk_score", 0),
+        "iocs": result.get("iocs", {}),
+        "reasoning": result.get("reasoning", {})
+    }

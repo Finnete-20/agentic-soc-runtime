@@ -1,21 +1,16 @@
 def score_threat(state):
+
     iocs = state["iocs"]
     reasoning = state.get("reasoning", {})
 
     score = 0
 
-    # URL risk
-    score += iocs["url_count"] * 20
+    score += iocs["url_count"] * 25
+    score += iocs["suspicious_words"] * 20
+    score += int(iocs["uppercase_ratio"] * 30)
 
-    # keyword risk
-    score += iocs["suspicious_words"] * 25
-
-    # uppercase spam
-    score += int(iocs["uppercase_ratio"] * 20)
-
-    # reasoning boost
     if len(reasoning.get("reasons", [])) >= 2:
-        score += 10
+        score += 15
 
     score = min(score, 100)
 
