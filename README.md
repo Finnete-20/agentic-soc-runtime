@@ -188,6 +188,8 @@ workflow.add_edge("reasoning", "report")
 
 app = workflow.compile()
 
+--- 
+
 ### Tech Stack
 
 - Python
@@ -200,6 +202,7 @@ app = workflow.compile()
 
 - TailwindCSS
 
+---
 
 ### How to Run
 - Backend
@@ -218,9 +221,13 @@ npm install
 
 npm run dev
 
+---
+
 ### Evaluation
 cd backend
 python evaluate.py
+
+---
 
 ### Purpose
 
