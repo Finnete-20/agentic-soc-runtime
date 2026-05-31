@@ -189,12 +189,17 @@ workflow.add_edge("reasoning", "report")
 app = workflow.compile()
 ---
 ### Tech Stack
+
 Python
+
 FastAPI
+
 LangGraph
+
 React
+
 TailwindCSS
----
+
 
 ### How to Run
 Backend
