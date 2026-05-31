@@ -14,19 +14,97 @@ The goal is explainability and structured decision-making rather than only class
 
 ### Multi-Agent SOC Pipeline
 
-The system uses specialized agents:
+The system uses a structured SOC-style agentic workflow that simulates real security analyst reasoning.
 
-- IOC Extraction Agent
-- Threat Intelligence Agent
-- Memory Lookup Agent
-- Risk Reasoning Engine
-- SOC Reporting Agent
-
-Each agent performs a specific step in the investigation pipeline.
+The pipeline is decomposed into five specialized agents:
 
 ---
 
-### Tool-Based Architecture
+### 1. IOC Agent
+
+Extracts security-relevant artifacts from email content.
+
+It identifies:
+
+- Email addresses
+- URLs
+- Domains
+- Basic suspicious indicators
+
+Purpose:
+Build structured intelligence from raw email input.
+
+---
+
+### 2. Threat Agent
+
+Evaluates the extracted indicators and assigns initial threat signals.
+
+It analyzes:
+
+- Impersonation attempts (fake organizations or domains)
+- Social engineering patterns
+- Urgency manipulation ("act now", "limited time")
+- Monetary lure (stipends, rewards, refunds)
+- External communication patterns
+
+Purpose:
+Model attacker intent and behavioral patterns.
+
+---
+
+### 3. Memory Agent
+
+Maintains lightweight historical context of known attack patterns.
+
+It can match:
+
+- Previously seen phishing patterns
+- Repeated scam structures
+- Known malicious keywords or themes
+
+Purpose:
+Improve detection consistency across repeated attack styles.
+
+---
+
+### 4. Reasoning Agent
+
+Aggregates signals from all previous agents and computes a final risk score.
+
+It combines:
+
+- IOC signals
+- Threat intelligence signals
+- Memory matches
+
+Then assigns:
+
+- Risk score (0–100)
+- Final classification decision logic
+
+Purpose:
+Act as the decision engine of the SOC workflow.
+
+---
+
+### 5. Reporting Agent
+
+Generates the final structured SOC output.
+
+It returns:
+
+- Final verdict (legit / suspicious / phishing)
+- Risk score
+- Extracted indicators
+- Supporting reasoning context
+
+Purpose:
+Provide explainable SOC-style output for analysts.
+
+---
+
+## Tool-Based Architecture
 
 A modular tool layer is used for threat intelligence simulation.
 
@@ -45,7 +123,7 @@ Future integrations:
 
 ---
 
-### Memory System
+## Memory System
 
 The system maintains historical context:
 
@@ -56,7 +134,7 @@ The system maintains historical context:
 
 ---
 
-### Risk Scoring
+## Risk Scoring
 
 Risk score range: 0–100
 
@@ -73,30 +151,26 @@ Risk score range: 0–100
 ```text
 Email Input
     ↓
-IOC Extraction Agent
+IOC Agent
     ↓
-Threat Intelligence Layer
+Threat Agent
     ↓
-Memory Lookup Agent
+Memory Agent
     ↓
-Risk Reasoning Engine
+Reasoning Agent
     ↓
-SOC Reporting Agent
+Reporting Agent
     ↓
 Final Classification Output
 ```
-
 ---
-
-## LangGraph Workflow
+### LangGraph Workflow
 
 Workflow:
 
 ioc → threat → memory → reasoning → report
 
 Implementation:
-
-```python
 workflow = StateGraph(AgentState)
 
 workflow.add_node("ioc", extract_iocs)
@@ -113,44 +187,36 @@ workflow.add_edge("memory", "reasoning")
 workflow.add_edge("reasoning", "report")
 
 app = workflow.compile()
-```
-## Tech Stack
+---
+### Tech Stack
+Python
+FastAPI
+LangGraph
+React
+TailwindCSS
+---
 
-- Python
-
-- FastAPI
-
-- LangGraph
-
-- React
-
-- TailwindCSS
-
-## How to Run
-
-Backend:
-
+### How to Run
+Backend
 cd backend
 pip install -r requirements.txt
 uvicorn main:api --reload
 
-Frontend:
-
+Frontend
 cd frontend
 npm install
 npm run dev
-
-## Evaluation:
-
+---
+### Evaluation
 cd backend
 python evaluate.py
 
-## Purpose
+### Purpose
 
 This system demonstrates:
 
-- Multi-agent reasoning
-- SOC-style workflows
-- Tool-based intelligence
-- Memory-enhanced detection
-- Explainable phishing detection
+Multi-agent reasoning
+SOC-style workflows
+Tool-based intelligence
+Memory-enhanced detection
+Explainable phishing detection
