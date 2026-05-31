@@ -1,33 +1,34 @@
-def threat_analysis(state):
+def score_threat(state):
+    iocs = state["iocs"]
+    reasoning = state.get("reasoning", {})
 
-    threat_data = {}
+    score = 0
 
-    for name, value in state.get("extracted_iocs", []):
+    # URL risk
+    score += iocs["url_count"] * 20
 
-        score = 0
+    # keyword risk
+    score += iocs["suspicious_words"] * 25
 
-        # REAL weighting (continuous signal space)
+    # uppercase spam
+    score += int(iocs["uppercase_ratio"] * 20)
 
-        if name == "url_count":
-            score += value * 35
+    # reasoning boost
+    if len(reasoning.get("reasons", [])) >= 2:
+        score += 10
 
-        elif name == "exclamation_count":
-            score += value * 10
+    score = min(score, 100)
 
-        elif name == "uppercase_ratio":
-            score += value * 50
+    if score >= 70:
+        verdict = "malicious"
+    elif score >= 40:
+        verdict = "suspicious"
+    else:
+        verdict = "safe"
 
-        elif name == "suspicious_density":
-            score += value * 20
-
-        elif name == "length":
-            score += 5 if value < 50 else 0
-
-        elif name == "word_count":
-            score += 5 if value < 8 else 0
-
-        threat_data[name] = {"risk_score": score}
-
-    state["threat_data"] = threat_data
-
-    return state
+    return {
+        "verdict": verdict,
+        "risk_score": score,
+        "iocs": iocs,
+        "reasoning": reasoning
+    }

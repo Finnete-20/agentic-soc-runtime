@@ -15,13 +15,13 @@ export async function analyzeEmail(email_content) {
 
     const data = await res.json();
 
-    if (!res.ok) {
-      throw new Error(data.detail || "Backend connection failed");
-    }
-
     return data;
   } catch (err) {
-    console.error("API ERROR:", err);
-    throw err;
+    return {
+      verdict: "error",
+      risk_score: 0,
+      iocs: {},
+      reasoning: {},
+    };
   }
 }

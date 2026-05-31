@@ -1,155 +1,129 @@
 import { useState } from "react";
 import { analyzeEmail } from "./api";
-
-const sampleEmails = [
-  `Subject: Password Expiring Today
-Your email password expires in 2 hours.
-Reset now: http://microsoft-reset-secure.net/login`,
-
-  `Subject: Urgent Account Verification Required
-Your Microsoft 365 account has been flagged.
-Verify here: http://security-check-login.net`,
-
-  `Subject: Invoice Attached
-Please review invoice attached and approve payment.`,
-
-  `Subject: Suspicious Login Attempt
-We detected a login from unknown device.`
-];
+import "./App.css";
 
 export default function App() {
   const [email, setEmail] = useState("");
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const loadSample = () => {
-    const random =
-      sampleEmails[Math.floor(Math.random() * sampleEmails.length)];
-    setEmail(random);
+  const handleAnalyze = async () => {
+    if (!email.trim()) {
+      setError("Please enter an email first");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
     setResult(null);
-  };
 
-  const analyze = async () => {
     try {
-      setLoading(true);
-      setResult(null);
-
       const data = await analyzeEmail(email);
-      setResult(data);
+      setResult(data || {});
     } catch (err) {
-      setResult({ error: err.message });
+      setError("Backend connection failed");
+      setResult(null);
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <div style={styles.page}>
-      <div style={styles.container}>
-        <h1 style={styles.title}>🛡️ SOC Phishing Detection System</h1>
+  const loadSample = () => {
+    setEmail(`Subject: Urgent Account Verification Required
+Your Microsoft 365 account has been flagged.
+Verify here: http://security-check-login.net`);
+  };
 
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 to-indigo-950 text-white p-6">
+      <div className="max-w-3xl mx-auto">
+
+        {/* HEADER */}
+        <h1 className="text-3xl font-bold mb-2">
+          🛡️ SOC Phishing Detection System
+        </h1>
+        <p className="text-gray-300 mb-6">
+          Multi-Agent Email Threat Analyzer
+        </p>
+
+        {/* INPUT BOX */}
         <textarea
+          className="w-full h-40 p-4 rounded bg-gray-900 border border-gray-700 text-white"
+          placeholder="Paste email content here..."
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="Paste or load email..."
-          style={styles.textarea}
         />
 
-        <div style={styles.buttons}>
-          <button style={styles.btn} onClick={loadSample}>
-            Load Sample Email
+        {/* BUTTONS */}
+        <div className="flex gap-3 mt-4">
+          <button
+            onClick={handleAnalyze}
+            disabled={loading}
+            className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded"
+          >
+            {loading ? "Analyzing..." : "Analyze Email"}
           </button>
 
-          <button style={styles.btnPrimary} onClick={analyze}>
-            Analyze Email
+          <button
+            onClick={loadSample}
+            className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded"
+          >
+            Load Sample
           </button>
         </div>
 
-        {loading && <p style={styles.loading}>Analyzing threat...</p>}
+        {/* ERROR */}
+        {error && (
+          <div className="mt-4 p-3 bg-red-700 rounded">
+            {error}
+          </div>
+        )}
 
-        {result && (
-          <div style={styles.resultBox}>
-            {result.error ? (
-              <p style={{ color: "red" }}>{result.error}</p>
-            ) : (
+        {/* RESULT */}
+        {result?.verdict && (
+          <div className="mt-6 p-4 bg-gray-900 rounded border border-gray-700">
+
+            <h2 className="text-xl font-bold mb-2">
+              Verdict:{" "}
+              <span
+                className={
+                  result.verdict === "malicious"
+                    ? "text-red-500"
+                    : result.verdict === "suspicious"
+                    ? "text-yellow-400"
+                    : "text-green-400"
+                }
+              >
+                {result.verdict}
+              </span>
+            </h2>
+
+            <p className="mb-2">
+              Risk Score:{" "}
+              <span className="font-bold">{result.risk_score}</span>
+            </p>
+
+            <h3 className="mt-3 font-semibold">IOCs</h3>
+            <pre className="text-sm bg-black p-3 rounded overflow-x-auto">
+              {JSON.stringify(result.iocs, null, 2)}
+            </pre>
+
+            {result.reasoning?.reasons && (
               <>
-                <h2>
-                  Verdict:{" "}
-                  <span
-                    style={{
-                      color:
-                        result.verdict === "phishing"
-                          ? "red"
-                          : "orange"
-                    }}
-                  >
-                    {result.verdict}
-                  </span>
-                </h2>
-
-                <p>Risk Score: {result.risk_score}</p>
-
-                <h3>IOCs</h3>
-                <ul>
-                  {result.iocs?.map((ioc, i) => (
-                    <li key={i}>{ioc}</li>
+                <h3 className="mt-3 font-semibold">Reasoning</h3>
+                <ul className="list-disc ml-5 text-sm text-gray-300">
+                  {result.reasoning.reasons.map((r, i) => (
+                    <li key={i}>{r}</li>
                   ))}
                 </ul>
               </>
             )}
+
           </div>
         )}
+
       </div>
     </div>
   );
 }
-
-const styles = {
-  page: {
-    background: "linear-gradient(135deg, #0b1f3a, #071427)",
-    minHeight: "100vh",
-    color: "white",
-    fontFamily: "Arial"
-  },
-  container: {
-    maxWidth: "800px",
-    margin: "0 auto",
-    padding: "30px"
-  },
-  title: {
-    fontSize: "26px",
-    marginBottom: "20px"
-  },
-  textarea: {
-    width: "100%",
-    height: "180px",
-    padding: "10px",
-    borderRadius: "8px",
-    border: "none"
-  },
-  buttons: {
-    marginTop: "10px",
-    display: "flex",
-    gap: "10px"
-  },
-  btn: {
-    padding: "10px",
-    cursor: "pointer"
-  },
-  btnPrimary: {
-    padding: "10px",
-    background: "#2d6cdf",
-    color: "white",
-    border: "none",
-    cursor: "pointer"
-  },
-  loading: {
-    marginTop: "15px"
-  },
-  resultBox: {
-    marginTop: "20px",
-    padding: "15px",
-    background: "#0f2a4d",
-    borderRadius: "10px"
-  }
-};

@@ -1,29 +1,18 @@
-from state import AgentState
+def reason_about_email(state):
+    email = state["email"]
+    iocs = state["iocs"]
 
+    reasons = []
 
-def reasoning_agent(state: AgentState):
+    if iocs["url_count"] > 0:
+        reasons.append("Contains external links")
 
-    risk = 0
+    if iocs["suspicious_words"]:
+        reasons.append("Contains phishing keywords")
 
-    for item in state.get("threat_data", {}).values():
-        risk += item["risk_score"]
+    if "microsoft" in email.lower():
+        reasons.append("Brand impersonation detected")
 
-    signals = state.get("extracted_iocs", [])
-
-    # nonlinear amplification (THIS IS KEY DIFFERENCE)
-
-    if any(s[0] == "uppercase_ratio" for s in signals):
-        risk *= 1.2
-
-    if any(s[0] == "url_count" for s in signals):
-        risk += 15
-
-    if any(s[0] == "exclamation_count" for s in signals):
-        risk += 10
-
-    # clamp
-    risk = min(100, risk)
-
-    state["risk_score"] = risk
-
-    return state
+    return {
+        "reasons": reasons
+    }
