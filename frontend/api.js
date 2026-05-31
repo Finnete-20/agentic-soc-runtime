@@ -9,9 +9,11 @@ export async function analyzeEmail(email_content) {
     body: JSON.stringify({ email_content }),
   });
 
+  const data = await res.json();
+
   if (!res.ok) {
-    throw new Error("Backend connection failed");
+    throw new Error(data?.message || "Backend error");
   }
 
-  return await res.json();
+  return data;
 }

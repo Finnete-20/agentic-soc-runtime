@@ -6,7 +6,6 @@ from runtime_graph import app as agent_app
 
 api = FastAPI()
 
-# IMPORTANT: CORS FIX (this is why frontend fails on Render)
 api.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -21,7 +20,7 @@ class EmailInput(BaseModel):
 
 @api.get("/")
 def health():
-    return {"status": "ok", "message": "SOC backend running"}
+    return {"status": "ok"}
 
 
 @api.post("/investigate")
@@ -38,12 +37,16 @@ def investigate(email: EmailInput):
 
     result = agent_app.invoke(state)
 
-    return result.get("final_report", {
-        "verdict": "unknown",
-        "risk_score": 0,
-        "message": "No report generated"
-    })
+    report = result.get("final_report", {})
+
+    # IMPORTANT: ALWAYS RETURN JSON OBJECT (not string)
+    return {
+        "verdict": report.get("verdict", "unknown"),
+        "risk_score": report.get("risk_score", 0),
+        "iocs": report.get("iocs", []),
+        "threat_data": report.get("threat_data", {}),
+        "investigation_steps": report.get("investigation_steps", [])
+    }
 
 
-# IMPORTANT: THIS MUST EXIST for uvicorn
 app = api
