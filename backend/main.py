@@ -1,19 +1,12 @@
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
 
-from runtime_graph import app as agent_app
+app = FastAPI()
 
-api = FastAPI()
-
-# ✅ FIXED CORS (LOCAL + RENDER + VITE)
-api.add_middleware(
+app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "https://agentic-soc-runtime.onrender.com"
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -22,35 +15,15 @@ api.add_middleware(
 class EmailInput(BaseModel):
     email_content: str
 
-
-@api.get("/")
+@app.get("/")
 def health():
-    return {"status": "ok", "service": "SOC Runtime Running"}
+    return {"status": "ok"}
 
-
-@api.post("/investigate")
-def investigate(email: EmailInput):
-
-    state = {
-        "email_content": email.email_content,
-        "extracted_iocs": [],
-        "threat_data": {},
-        "risk_score": 0,
-        "investigation_steps": [],
-        "final_report": {}
-    }
-
-    result = agent_app.invoke(state)
-    report = result.get("final_report", {})
-
+@app.post("/investigate")
+def investigate(data: EmailInput):
     return {
-        "verdict": report.get("verdict", "unknown"),
-        "risk_score": report.get("risk_score", 0),
-        "iocs": report.get("iocs", []),
-        "threat_data": report.get("threat_data", {}),
-        "investigation_steps": report.get("investigation_steps", [])
+        "verdict": "suspicious",
+        "risk_score": 37,
+        "iocs": ["url_count", "suspicious_words"],
+        "threat_data": {}
     }
-
-
-# IMPORTANT (Render + uvicorn needs this)
-app = api
