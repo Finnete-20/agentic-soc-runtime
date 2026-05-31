@@ -4,7 +4,7 @@ def extract_iocs(state):
     text = state["email"]
 
     urls = re.findall(r"https?://\S+", text)
-    emails = re.findall(r"\S+@\S+", text)
+    emails = re.findall(r"[\w\.-]+@[\w\.-]+", text)
 
     suspicious_words = sum([
         "urgent" in text.lower(),
@@ -14,11 +14,14 @@ def extract_iocs(state):
         "account" in text.lower()
     ])
 
+    domains = [e.split("@")[-1] for e in emails]
+
     return {
         **state,
         "iocs": {
             "urls": urls,
             "emails": emails,
+            "domains": domains,
             "url_count": len(urls),
             "suspicious_words": suspicious_words
         }
