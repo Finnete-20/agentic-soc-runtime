@@ -5,109 +5,132 @@ export default function App() {
   const [email, setEmail] = useState("");
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+
+  const loadSample = () => {
+    setEmail(`Subject: Urgent Account Verification Required
+
+Your Microsoft 365 account has been flagged.
+
+Verify here:
+http://security-check-login.net
+
+Failure to act within 2 hours will result in suspension.`);
+  };
 
   const handleAnalyze = async () => {
     if (!email.trim()) return;
 
     setLoading(true);
-    setError(null);
-    setResult(null);
 
     try {
-      const res = await analyzeEmail(email);
-      setResult(res);
+      const data = await analyzeEmail(email);
+      setResult(data);
     } catch (err) {
-      setError("Backend connection failed");
-      setResult(null);
-    } finally {
-      setLoading(false);
+      console.error(err);
+
+      setResult({
+        verdict: "error",
+        risk_score: 0,
+        signals: [],
+        soc_report: ["Backend connection failed"],
+      });
     }
+
+    setLoading(false);
   };
 
   return (
-    <div className="min-h-screen bg-blue-900 text-white p-6">
-      
-      {/* HEADER */}
-      <h1 className="text-3xl font-bold mb-2">
-        🛡️ Agentic SOC Phishing Detection System
-      </h1>
+    <div className="min-h-screen bg-blue-900 text-white p-8">
+      <div className="max-w-5xl mx-auto">
 
-      <p className="text-gray-300 mb-4">
-        Multi-Agent Email Threat Analyzer
-      </p>
+        <h1 className="text-4xl font-bold mb-2">
+          🛡️ Agentic SOC Phishing Detection System
+        </h1>
 
-      {/* INPUT */}
-      <textarea
-        className="w-full h-60 p-3 text-black rounded"
-        placeholder="Paste email content here..."
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
+        <p className="text-blue-200 mb-6">
+          Multi-Agent Email Threat Analyzer
+        </p>
 
-      {/* BUTTON */}
-      <button
-        onClick={handleAnalyze}
-        className="mt-4 px-5 py-2 bg-green-600 rounded hover:bg-green-700"
-      >
-        {loading ? "Analyzing..." : "Analyze Email"}
-      </button>
+        <textarea
+          className="w-full h-72 p-4 rounded text-black"
+          placeholder="Paste suspicious email here..."
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
 
-      {/* ERROR */}
-      {error && (
-        <div className="mt-4 text-red-400">
-          {error}
+        <div className="mt-4 flex gap-3">
+          <button
+            onClick={loadSample}
+            className="bg-gray-600 px-4 py-2 rounded"
+          >
+            Load Sample Email
+          </button>
+
+          <button
+            onClick={handleAnalyze}
+            className="bg-green-600 px-4 py-2 rounded"
+            disabled={loading}
+          >
+            {loading ? "Analyzing..." : "Analyze Email"}
+          </button>
         </div>
-      )}
 
-      {/* RESULTS */}
-      {result && (
-        <div className="mt-6 bg-gray-900 p-4 rounded">
+        {result && (
+          <div className="mt-8 bg-slate-800 rounded p-6">
 
-          <h2 className="text-xl font-bold mb-2">
-            Verdict: {result.verdict || "unknown"}
-          </h2>
+            <h2 className="text-2xl font-bold mb-3">
+              Verdict: {result.verdict}
+            </h2>
 
-          <p className="mb-2">
-            Risk Score: {result.risk_score ?? 0}
-          </p>
+            <p className="text-lg mb-6">
+              Risk Score: {result.risk_score}
+            </p>
 
-          {/* SIGNALS */}
-          <div className="mb-3">
-            <h3 className="font-bold">Signals</h3>
-            <ul className="list-disc ml-5">
-              {(result.signals || []).length > 0 ? (
-                result.signals.map((s, i) => <li key={i}>{s}</li>)
-              ) : (
-                <li>No signals detected</li>
-              )}
-            </ul>
-          </div>
+            {/* Signals */}
+            <h3 className="text-xl font-semibold mb-2">
+              Signals
+            </h3>
 
-          {/* SOC REPORT */}
-          <div className="mb-3">
-            <h3 className="font-bold">SOC Report</h3>
-            <ul className="list-disc ml-5">
-              {(result.soc_report || []).length > 0 ? (
-                result.soc_report.map((r, i) => <li key={i}>{r}</li>)
-              ) : (
-                <li>No SOC reasoning available</li>
-              )}
-            </ul>
-          </div>
+            {result.reasoning?.signals?.length > 0 ? (
+              <ul className="list-disc pl-6 mb-6">
+                {result.reasoning.signals.map((signal, index) => (
+                  <li key={index}>{signal}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mb-6">No signals detected</p>
+            )}
 
-          {/* RAW DEBUG (optional but useful for grading) */}
-          <details className="mt-3">
-            <summary className="cursor-pointer text-gray-400">
+            {/* SOC REPORT */}
+            <h3 className="text-xl font-semibold mb-2">
+              SOC Report
+            </h3>
+
+            {result.reasoning?.soc_report?.length > 0 ? (
+              <ul className="list-disc pl-6 mb-6">
+                {result.reasoning.soc_report.map((item, index) => (
+                  <li key={index}>{item}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mb-6">
+                No SOC reasoning available
+              </p>
+            )}
+
+            {/* RAW OUTPUT */}
+            <h3 className="text-xl font-semibold mb-2">
               Raw Output
-            </summary>
-            <pre className="text-xs bg-black p-2 mt-2 overflow-auto">
+            </h3>
+
+            <pre className="bg-black p-4 rounded overflow-auto text-sm">
               {JSON.stringify(result, null, 2)}
             </pre>
-          </details>
 
-        </div>
-      )}
+          </div>
+        )}
+
+      </div>
     </div>
   );
 }
