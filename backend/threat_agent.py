@@ -1,17 +1,24 @@
 def threat_analysis(state):
-    text = state["email"]
     iocs = state["iocs"]
+    text = state["email"].lower()
 
-    keywords = ["urgent", "verify", "password", "login", "account", "suspended"]
+    keyword_hits = [
+        k for k in ["urgent", "verify", "password", "login", "account", "suspended"]
+        if k in text
+    ]
 
-    hits = [k for k in keywords if k in text.lower()]
+    score = (
+        iocs["url_count"] * 25 +
+        iocs["suspicious_words"] * 15 +
+        len(keyword_hits) * 10
+    )
 
-    score = len(hits) * 10 + iocs["url_count"] * 20
+    score = min(score, 100)
 
     return {
         **state,
         "threat": {
-            "keyword_hits": hits,
-            "base_score": score
+            "base_score": score,
+            "keyword_hits": keyword_hits
         }
     }

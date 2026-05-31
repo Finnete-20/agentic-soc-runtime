@@ -3,7 +3,7 @@ def reporting_agent(state):
         "verdict": state["reasoning"]["verdict"],
         "risk_score": state["reasoning"]["score"],
         "iocs": state["iocs"],
-        "threat_data": state["threat"],
         "memory": state["memory"],
+        "threat": state["threat"],
         "reasoning": state["reasoning"]
     }

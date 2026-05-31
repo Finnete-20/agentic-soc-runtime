@@ -1,25 +1,36 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from runtime_graph import app as workflow_app
 
-from runtime_graph import app as agent_app
-
-app = FastAPI()
+app = FastAPI(title="Agentic SOC System")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+class EmailInput(BaseModel):
+    email_content: str
 
 @app.get("/")
 def health():
     return {"status": "ok"}
 
 @app.post("/investigate")
-def investigate(payload: dict):
-    email = payload["email_content"]
+def investigate(payload: EmailInput):
+    result = workflow_app.invoke({
+        "email": payload.email_content
+    })
 
-    result = agent_app.invoke({"email": email})
-
-    return result["report"]
+    return {
+        "verdict": result.get("verdict"),
+        "risk_score": result.get("risk_score"),
+        "iocs": result.get("iocs", {}),
+        "memory": result.get("memory", {}),
+        "reasoning": result.get("reasoning", {}),
+        "threat": result.get("threat", {})
+    }

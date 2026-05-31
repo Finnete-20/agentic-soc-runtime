@@ -4,37 +4,47 @@ import { analyzeEmail } from "./api";
 export default function App() {
   const [email, setEmail] = useState("");
   const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const handleAnalyze = async () => {
-    const res = await analyzeEmail(email);
-    setResult(res || {});
+    try {
+      setLoading(true);
+      setResult(null);
+
+      const res = await analyzeEmail(email);
+      setResult(res);
+
+    } catch (err) {
+      setResult({
+        verdict: "error",
+        risk_score: 0,
+        iocs: {}
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-blue-800 text-white p-6">
-      <h1 className="text-2xl font-bold">
-        🛡️ Agentic SOC Phishing Detection System
-      </h1>
+    <div style={{ padding: 20 }}>
+      <h2>🛡️ Agentic SOC Phishing Detection</h2>
 
       <textarea
-        className="w-full mt-4 p-2 text-black"
         rows={6}
+        style={{ width: "100%" }}
         value={email}
         onChange={(e) => setEmail(e.target.value)}
       />
 
-      <button
-        className="bg-green-500 px-4 py-2 mt-3"
-        onClick={handleAnalyze}
-      >
-        Analyze Email
+      <button onClick={handleAnalyze}>
+        {loading ? "Analyzing..." : "Analyze Email"}
       </button>
 
       {result?.verdict && (
-        <div className="mt-6 bg-black p-4">
-          <h2>Verdict: {result.verdict}</h2>
+        <div style={{ marginTop: 20 }}>
+          <h3>Verdict: {result.verdict}</h3>
           <p>Risk Score: {result.risk_score}</p>
-          <pre>{JSON.stringify(result, null, 2)}</pre>
+          <pre>{JSON.stringify(result.iocs, null, 2)}</pre>
         </div>
       )}
     </div>

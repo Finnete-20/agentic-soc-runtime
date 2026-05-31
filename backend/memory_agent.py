@@ -1,4 +1,4 @@
-KNOWN_PATTERNS = ["microsoft", "password", "verify"]
+KNOWN_PATTERNS = ["microsoft", "password", "verify", "urgent"]
 
 def memory_agent(state):
     text = state["email"].lower()
