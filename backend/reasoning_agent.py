@@ -1,10 +1,16 @@
 def reasoning_agent(state):
     base = state["threat"]["base_score"]
-    memory = state["memory"]["memory_score"]
 
-    score = base + memory
+    memory_bonus = state["memory"].get(
+        "memory_score",
+        0
+    )
 
-    if score >= 65:
+    score = base + memory_bonus
+
+    score = min(score, 100)
+
+    if score >= 70:
         verdict = "phishing"
     elif score >= 35:
         verdict = "suspicious"
@@ -13,7 +19,6 @@ def reasoning_agent(state):
 
     return {
         **state,
-        "risk_score": score,
         "reasoning": {
             "score": score,
             "verdict": verdict
