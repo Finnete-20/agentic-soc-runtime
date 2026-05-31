@@ -4,9 +4,10 @@ from pydantic import BaseModel
 
 from runtime_graph import app as agent_app
 
-app = FastAPI()
+api = FastAPI()
 
-app.add_middleware(
+# IMPORTANT: CORS FIX (this is why frontend fails on Render)
+api.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=True,
@@ -14,12 +15,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 class EmailInput(BaseModel):
     email_content: str
 
 
-@app.post("/investigate")
+@api.get("/")
+def health():
+    return {"status": "ok", "message": "SOC backend running"}
+
+
+@api.post("/investigate")
 def investigate(email: EmailInput):
 
     state = {
@@ -34,7 +39,11 @@ def investigate(email: EmailInput):
     result = agent_app.invoke(state)
 
     return result.get("final_report", {
-        "classification": "unknown",
+        "verdict": "unknown",
         "risk_score": 0,
         "message": "No report generated"
     })
+
+
+# IMPORTANT: THIS MUST EXIST for uvicorn
+app = api
