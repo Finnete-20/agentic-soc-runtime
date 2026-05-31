@@ -1,20 +1,16 @@
 import re
 
-def extract_iocs(email: str):
+def extract_iocs(state):
+    text = state["email"]
 
-    urls = re.findall(r"http[s]?://\S+", email)
-
-    suspicious_words = sum([
-        "urgent" in email.lower(),
-        "verify" in email.lower(),
-        "password" in email.lower(),
-        "login" in email.lower(),
-        "account" in email.lower()
-    ])
+    urls = re.findall(r"https?://\S+", text)
+    emails = re.findall(r"\S+@\S+", text)
 
     return {
-        "url_count": len(urls),
-        "urls": urls,
-        "suspicious_words": suspicious_words,
-        "uppercase_ratio": sum(c.isupper() for c in email) / max(len(email), 1)
+        **state,
+        "iocs": {
+            "urls": urls,
+            "emails": emails,
+            "url_count": len(urls)
+        }
     }

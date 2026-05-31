@@ -1,29 +1,17 @@
-def score_threat(state):
-
+def threat_analysis(state):
+    text = state["email"]
     iocs = state["iocs"]
-    reasoning = state.get("reasoning", {})
 
-    score = 0
+    keywords = ["urgent", "verify", "password", "login", "account", "suspended"]
 
-    score += iocs["url_count"] * 25
-    score += iocs["suspicious_words"] * 20
-    score += int(iocs["uppercase_ratio"] * 30)
+    hits = [k for k in keywords if k in text.lower()]
 
-    if len(reasoning.get("reasons", [])) >= 2:
-        score += 15
-
-    score = min(score, 100)
-
-    if score >= 70:
-        verdict = "malicious"
-    elif score >= 40:
-        verdict = "suspicious"
-    else:
-        verdict = "safe"
+    score = len(hits) * 10 + iocs["url_count"] * 20
 
     return {
-        "verdict": verdict,
-        "risk_score": score,
-        "iocs": iocs,
-        "reasoning": reasoning
+        **state,
+        "threat": {
+            "keyword_hits": hits,
+            "base_score": score
+        }
     }

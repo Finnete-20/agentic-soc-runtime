@@ -1,38 +1,25 @@
-from langgraph.graph import StateGraph, END
+from langgraph.graph import StateGraph
+
 from state import AgentState
-
 from ioc_agent import extract_iocs
-from reasoning_agent import reason_about_email
-from threat_agent import score_threat
+from threat_agent import threat_analysis
+from memory_agent import memory_agent
+from reasoning_agent import reasoning_agent
+from reporting_agent import reporting_agent
 
-def ioc_node(state):
-    state["iocs"] = extract_iocs(state["email"])
-    return state
+workflow = StateGraph(AgentState)
 
-def reasoning_node(state):
-    state["reasoning"] = reason_about_email(state)
-    return state
+workflow.add_node("ioc", extract_iocs)
+workflow.add_node("threat", threat_analysis)
+workflow.add_node("memory", memory_agent)
+workflow.add_node("reasoning", reasoning_agent)
+workflow.add_node("report", reporting_agent)
 
-def threat_node(state):
-    result = score_threat(state)
+workflow.set_entry_point("ioc")
 
-    state["verdict"] = result["verdict"]
-    state["risk_score"] = result["risk_score"]
-    state["iocs"] = result["iocs"]
-    state["reasoning"] = result["reasoning"]
+workflow.add_edge("ioc", "threat")
+workflow.add_edge("threat", "memory")
+workflow.add_edge("memory", "reasoning")
+workflow.add_edge("reasoning", "report")
 
-    return state
-
-graph = StateGraph(AgentState)
-
-graph.add_node("ioc", ioc_node)
-graph.add_node("reasoning", reasoning_node)
-graph.add_node("threat", threat_node)
-
-graph.set_entry_point("ioc")
-
-graph.add_edge("ioc", "reasoning")
-graph.add_edge("reasoning", "threat")
-graph.add_edge("threat", END)
-
-app = graph.compile()
+app = workflow.compile()

@@ -1,19 +1,20 @@
-def reason_about_email(state):
+def reasoning_agent(state):
+    base = state["threat"]["base_score"]
+    memory_bonus = state["memory"]["memory_score"]
 
-    email = state["email"]
-    iocs = state["iocs"]
+    score = base + memory_bonus
 
-    reasons = []
-
-    if iocs["url_count"] > 0:
-        reasons.append("Contains external links")
-
-    if iocs["suspicious_words"] > 0:
-        reasons.append("Contains phishing keywords")
-
-    if "microsoft" in email.lower():
-        reasons.append("Possible brand impersonation")
+    if score > 60:
+        verdict = "phishing"
+    elif score > 30:
+        verdict = "suspicious"
+    else:
+        verdict = "legit"
 
     return {
-        "reasons": reasons
+        **state,
+        "reasoning": {
+            "score": score,
+            "verdict": verdict
+        }
     }

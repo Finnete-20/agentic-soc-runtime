@@ -1,47 +1,40 @@
 import { useState } from "react";
 import { analyzeEmail } from "./api";
-import "./App.css";
 
 export default function App() {
   const [email, setEmail] = useState("");
   const [result, setResult] = useState(null);
-  const [loading, setLoading] = useState(false);
 
   const handleAnalyze = async () => {
-    if (!email) return;
-
-    setLoading(true);
-    setResult(null);
-
-    const data = await analyzeEmail(email);
-    setResult(data);
-
-    setLoading(false);
+    const res = await analyzeEmail(email);
+    setResult(res || {});
   };
 
   return (
-    <div style={{ padding: 20, fontFamily: "sans-serif" }}>
-      <h2>SOC Phishing Detection System</h2>
+    <div className="min-h-screen bg-blue-800 text-white p-6">
+      <h1 className="text-2xl font-bold">
+        🛡️ Agentic SOC Phishing Detection System
+      </h1>
 
       <textarea
-        rows="8"
-        style={{ width: "100%" }}
+        className="w-full mt-4 p-2 text-black"
+        rows={6}
         value={email}
         onChange={(e) => setEmail(e.target.value)}
       />
 
-      <button onClick={handleAnalyze} disabled={loading}>
-        {loading ? "Analyzing..." : "Analyze Email"}
+      <button
+        className="bg-green-500 px-4 py-2 mt-3"
+        onClick={handleAnalyze}
+      >
+        Analyze Email
       </button>
 
-      {result && (
-        <div style={{ marginTop: 20 }}>
-          <h3>Verdict: {result.verdict}</h3>
+      {result?.verdict && (
+        <div className="mt-6 bg-black p-4">
+          <h2>Verdict: {result.verdict}</h2>
           <p>Risk Score: {result.risk_score}</p>
-
-          <pre>{JSON.stringify(result.iocs, null, 2)}</pre>
-
-          <pre>{JSON.stringify(result.reasoning, null, 2)}</pre>
+          <pre>{JSON.stringify(result, null, 2)}</pre>
         </div>
       )}
     </div>

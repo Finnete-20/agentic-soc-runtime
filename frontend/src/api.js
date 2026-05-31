@@ -4,22 +4,17 @@ const BASE_URL =
     : "https://agentic-soc-runtime.onrender.com";
 
 export async function analyzeEmail(email_content) {
-  try {
-    const res = await fetch(`${BASE_URL}/investigate`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email_content }),
-    });
+  const res = await fetch(`${BASE_URL}/investigate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email_content }),
+  });
 
-    return await res.json();
-  } catch (err) {
-    return {
-      verdict: "error",
-      risk_score: 0,
-      iocs: {},
-      reasoning: {},
-    };
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error("Backend connection failed");
   }
+
+  return data;
 }
