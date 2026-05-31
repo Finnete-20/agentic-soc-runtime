@@ -6,9 +6,14 @@ from runtime_graph import app as agent_app
 
 api = FastAPI()
 
+# ✅ FIXED CORS (LOCAL + RENDER + VITE)
 api.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "https://agentic-soc-runtime.onrender.com"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -20,7 +25,7 @@ class EmailInput(BaseModel):
 
 @api.get("/")
 def health():
-    return {"status": "ok"}
+    return {"status": "ok", "service": "SOC Runtime Running"}
 
 
 @api.post("/investigate")
@@ -36,10 +41,8 @@ def investigate(email: EmailInput):
     }
 
     result = agent_app.invoke(state)
-
     report = result.get("final_report", {})
 
-    # IMPORTANT: ALWAYS RETURN JSON OBJECT (not string)
     return {
         "verdict": report.get("verdict", "unknown"),
         "risk_score": report.get("risk_score", 0),
@@ -49,4 +52,5 @@ def investigate(email: EmailInput):
     }
 
 
+# IMPORTANT (Render + uvicorn needs this)
 app = api
