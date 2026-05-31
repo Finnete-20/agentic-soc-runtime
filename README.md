@@ -187,31 +187,37 @@ workflow.add_edge("memory", "reasoning")
 workflow.add_edge("reasoning", "report")
 
 app = workflow.compile()
----
+
 ### Tech Stack
 
-Python
+- Python
 
-FastAPI
+- FastAPI
 
-LangGraph
+- LangGraph
 
-React
+- React
 
-TailwindCSS
+- TailwindCSS
 
 
 ### How to Run
-Backend
+- Backend
+
 cd backend
+
 pip install -r requirements.txt
+
 uvicorn main:api --reload
 
-Frontend
+- Frontend
+
 cd frontend
+
 npm install
+
 npm run dev
----
+
 ### Evaluation
 cd backend
 python evaluate.py
@@ -220,8 +226,8 @@ python evaluate.py
 
 This system demonstrates:
 
-Multi-agent reasoning
-SOC-style workflows
-Tool-based intelligence
-Memory-enhanced detection
-Explainable phishing detection
+- Multi-agent reasoning
+- SOC-style workflows
+- Tool-based intelligence
+- Memory-enhanced detection
+- Explainable phishing detection
