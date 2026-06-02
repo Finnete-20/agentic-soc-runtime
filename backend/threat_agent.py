@@ -6,18 +6,21 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def threat_analysis(state):
 
+    iocs = state.get("iocs", {}).get("features", {})
+
     prompt = f"""
 You are a SOC Threat Analyst.
 
-Analyze phishing signals from IOC data.
+Convert these indicators into structured threat intelligence.
 
-IOC:
-{state.get("iocs")}
+Indicators:
+{iocs}
 
-Return JSON:
+Return JSON ONLY:
+
 {{
+  "base_score": 0-100,
   "signals": [],
-  "base_score": 0,
   "explanation": ""
 }}
 """

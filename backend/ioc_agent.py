@@ -12,18 +12,21 @@ def extract_iocs(state):
     emails = re.findall(r"[\w\.-]+@[\w\.-]+", text)
 
     prompt = f"""
-You are a SOC IOC extraction assistant.
+You are a SOC IOC extraction engine.
 
-Email:
+Analyze this email:
+
 {text}
 
-Extract structured intelligence:
+Return JSON ONLY:
 
-Return JSON:
 {{
-  "suspicious_summary": "...",
-  "risk_keywords": [],
-  "phishing_indicators": []
+  "job_scam": true/false,
+  "credential_request": true/false,
+  "impersonation": true/false,
+  "data_harvesting": true/false,
+  "urgency_language": true/false,
+  "summary": "short security summary"
 }}
 """
 
@@ -31,20 +34,21 @@ Return JSON:
         model="gpt-4.1-mini",
         temperature=0,
         messages=[
-            {"role": "system", "content": "Extract cybersecurity indicators."},
+            {"role": "system", "content": "Extract phishing indicators."},
             {"role": "user", "content": prompt}
         ]
     )
 
-    llm_output = response.choices[0].message.content
-
     try:
-        llm_data = json.loads(llm_output)
+        llm_data = json.loads(response.choices[0].message.content)
     except:
         llm_data = {
-            "suspicious_summary": "parse_error",
-            "risk_keywords": [],
-            "phishing_indicators": []
+            "job_scam": False,
+            "credential_request": False,
+            "impersonation": False,
+            "data_harvesting": False,
+            "urgency_language": False,
+            "summary": "parse_error"
         }
 
     return {
@@ -52,6 +56,6 @@ Return JSON:
         "iocs": {
             "urls": urls,
             "emails": emails,
-            "llm": llm_data
+            "features": llm_data
         }
     }

@@ -7,20 +7,26 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 def reasoning_agent(state):
 
     prompt = f"""
-You are the FINAL SOC decision engine.
+You are a SENIOR SOC ANALYST.
 
-Use ALL data to classify the email.
+IMPORTANT SECURITY RULES:
+- Job recruitment emails asking for personal data are HIGHLY LIKELY PHISHING
+- Gmail recruiters pretending to represent institutions are suspicious
+- Requests for phone/email/name collection are data harvesting
+- Treat unsolicited job offers as suspicious by default
 
-IOC:
+Now analyze:
+
+EMAIL:
+{state.get("email")}
+
+IOC FEATURES:
 {state.get("iocs")}
 
-Threat:
+THREAT:
 {state.get("threat")}
 
-Memory:
-{state.get("memory")}
-
-Return ONLY JSON:
+Return JSON ONLY:
 
 {{
   "score": 0-100,
@@ -34,7 +40,7 @@ Return ONLY JSON:
         model="gpt-4.1-mini",
         temperature=0,
         messages=[
-            {"role": "system", "content": "Final SOC decision engine."},
+            {"role": "system", "content": "You are a strict SOC phishing classifier."},
             {"role": "user", "content": prompt}
         ]
     )
