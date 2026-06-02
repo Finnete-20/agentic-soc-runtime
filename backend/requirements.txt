@@ -3,3 +3,5 @@ uvicorn
 pydantic
 requests
 langgraph
+openai
+python-dotenv

@@ -1,5 +1,8 @@
+import os
 from dotenv import load_dotenv
-load_dotenv()
+
+if os.path.exists(".env"):
+    load_dotenv()
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,9 +21,6 @@ app.add_middleware(
 )
 
 
-# -----------------------------
-# FIXED INPUT SCHEMA (MATCHES FRONTEND + SWAGGER)
-# -----------------------------
 class EmailInput(BaseModel):
     email_content: str
 
@@ -32,10 +32,6 @@ def health():
 
 @app.post("/investigate")
 def investigate(payload: EmailInput):
-
-    # Map API input → graph input
-    result = agent_app.invoke({
+    return agent_app.invoke({
         "email": payload.email_content
     })
-
-    return result
