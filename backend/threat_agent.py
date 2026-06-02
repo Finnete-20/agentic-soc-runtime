@@ -1,30 +1,39 @@
+import os
+import json
+from openai import OpenAI
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
 def threat_analysis(state):
 
-    text = state["email"].lower()
+    prompt = f"""
+You are a SOC Threat Analyst.
 
-    score = 0
-    signals = []
+Analyze phishing signals from IOC data.
 
-    if any(x in text for x in ["urgent", "immediately", "verify"]):
-        score += 20
-        signals.append("urgency_manipulation")
+IOC:
+{state.get("iocs")}
 
-    if any(x in text for x in ["password", "login", "verify account"]):
-        score += 25
-        signals.append("credential_harvesting")
+Return JSON:
+{{
+  "signals": [],
+  "base_score": 0,
+  "explanation": ""
+}}
+"""
 
-    if "forms.gle" in text:
-        score += 10
-        signals.append("google_forms_link")
+    response = client.chat.completions.create(
+        model="gpt-4.1-mini",
+        temperature=0,
+        messages=[
+            {"role": "system", "content": "SOC threat analyst."},
+            {"role": "user", "content": prompt}
+        ]
+    )
 
-    if "@gmail.com" in text:
-        score += 10
-        signals.append("external_email_domain")
+    result = json.loads(response.choices[0].message.content)
 
     return {
         **state,
-        "threat": {
-            "base_score": score,
-            "signals": signals
-        }
+        "threat": result
     }
