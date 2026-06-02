@@ -5,6 +5,7 @@ from openai import OpenAI
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+
 def extract_iocs(state):
     text = state["email"]
 
@@ -18,14 +19,14 @@ Analyze this email:
 
 {text}
 
-Return JSON ONLY:
+Return ONLY valid JSON (no markdown, no explanation):
 
 {{
-  "job_scam": true/false,
-  "credential_request": true/false,
-  "impersonation": true/false,
-  "data_harvesting": true/false,
-  "urgency_language": true/false,
+  "job_scam": true,
+  "credential_request": true,
+  "impersonation": true,
+  "data_harvesting": true,
+  "urgency_language": true,
   "summary": "short security summary"
 }}
 """
@@ -34,21 +35,28 @@ Return JSON ONLY:
         model="gpt-4.1-mini",
         temperature=0,
         messages=[
-            {"role": "system", "content": "Extract phishing indicators."},
+            {"role": "system", "content": "Extract phishing indicators. Return strict JSON only."},
             {"role": "user", "content": prompt}
         ]
     )
 
+    content = response.choices[0].message.content.strip()
+
+    # ---------------------------
+    # SAFE JSON CLEANING
+    # ---------------------------
+    content = content.replace("```json", "").replace("```", "").strip()
+
     try:
-        llm_data = json.loads(response.choices[0].message.content)
+        llm_data = json.loads(content)
     except:
         llm_data = {
-            "job_scam": False,
-            "credential_request": False,
+            "job_scam": "job" in text.lower(),
+            "credential_request": any(k in text.lower() for k in ["password", "login", "verify"]),
             "impersonation": False,
-            "data_harvesting": False,
-            "urgency_language": False,
-            "summary": "parse_error"
+            "data_harvesting": "email" in text.lower(),
+            "urgency_language": "urgent" in text.lower(),
+            "summary": "fallback_rule_based"
         }
 
     return {

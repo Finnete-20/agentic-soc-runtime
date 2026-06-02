@@ -18,20 +18,44 @@ app.add_middleware(
 )
 
 
+# -------------------------
+# INPUT SCHEMA (FIXED)
+# -------------------------
 class EmailInput(BaseModel):
-    email_content: str
+    email: str
 
 
+# -------------------------
+# HEALTH CHECK
+# -------------------------
 @app.get("/")
 def health():
     return {"status": "ok"}
 
 
+# -------------------------
+# MAIN ENDPOINT
+# -------------------------
 @app.post("/investigate")
 def investigate(payload: EmailInput):
 
-    result = agent_app.invoke({
-        "email": payload.email_content
-    })
+    try:
+        result = agent_app.invoke({
+            "email": payload.email
+        })
 
-    return result
+        return {
+            "verdict": result.get("verdict"),
+            "risk_score": result.get("risk_score"),
+            "reasoning": result.get("reasoning"),
+            "iocs": result.get("iocs")
+        }
+
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e),
+            "verdict": "error",
+            "risk_score": 0,
+            "reasoning": {}
+        }
