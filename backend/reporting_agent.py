@@ -1,18 +1,12 @@
 def reporting_agent(state):
 
-    score = state["reasoning"]["score"]
-
-    if score >= 70:
-        verdict = "phishing"
-    elif score >= 35:
-        verdict = "suspicious"
-    else:
-        verdict = "legit"
+    r = state.get("reasoning", {})
 
     return {
-        "verdict": verdict,
-        "risk_score": score,
-        "signals": state["reasoning"].get("signals", []),
-        "soc_report": state["reasoning"].get("soc_report", []),
-        "iocs": state["iocs"]
+        "verdict": r.get("verdict", "unknown"),
+        "risk_score": r.get("score", 0),
+        "signals": r.get("signals", []),
+        "soc_report": r.get("soc_report", []),
+        "iocs": state.get("iocs", {}),
+        "virustotal": state.get("virustotal", [])
     }
