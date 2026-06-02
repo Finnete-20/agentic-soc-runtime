@@ -18,44 +18,24 @@ app.add_middleware(
 )
 
 
-# -------------------------
-# INPUT SCHEMA (FIXED)
-# -------------------------
+# -----------------------------
+# FIXED INPUT SCHEMA (MATCHES FRONTEND + SWAGGER)
+# -----------------------------
 class EmailInput(BaseModel):
-    email: str
+    email_content: str
 
 
-# -------------------------
-# HEALTH CHECK
-# -------------------------
 @app.get("/")
 def health():
     return {"status": "ok"}
 
 
-# -------------------------
-# MAIN ENDPOINT
-# -------------------------
 @app.post("/investigate")
 def investigate(payload: EmailInput):
 
-    try:
-        result = agent_app.invoke({
-            "email": payload.email
-        })
+    # Map API input → graph input
+    result = agent_app.invoke({
+        "email": payload.email_content
+    })
 
-        return {
-            "verdict": result.get("verdict"),
-            "risk_score": result.get("risk_score"),
-            "reasoning": result.get("reasoning"),
-            "iocs": result.get("iocs")
-        }
-
-    except Exception as e:
-        return {
-            "status": "error",
-            "message": str(e),
-            "verdict": "error",
-            "risk_score": 0,
-            "reasoning": {}
-        }
+    return result

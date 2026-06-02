@@ -6,74 +6,65 @@ def threat_analysis(state):
     signals = []
 
     # -----------------------------
-    # JOB SCAM DETECTION (CRITICAL)
+    # JOB SCAM (CRITICAL - FIXES YOUR BUG)
     # -----------------------------
-    job_keywords = [
+    if any(k in text for k in [
         "remote student worker",
         "student worker",
-        "job",
         "employment",
+        "job",
         "position",
         "hiring",
         "opportunity",
-        "work from home",
-        "remote work"
-    ]
-
-    if any(k in text for k in job_keywords):
-        score += 30
+        "work from home"
+    ]):
+        score += 40
         signals.append("job_scam_pattern")
 
     # -----------------------------
-    # DATA HARVESTING (VERY STRONG SIGNAL)
+    # DATA HARVESTING (VERY IMPORTANT)
     # -----------------------------
-    data_keywords = [
+    if any(k in text for k in [
         "phone number",
-        "full name",
         "personal email",
+        "full name",
         "send your details",
         "contact information",
         "email address"
-    ]
-
-    if any(k in text for k in data_keywords):
-        score += 30
+    ]):
+        score += 35
         signals.append("data_harvesting_request")
 
     # -----------------------------
     # INSTITUTION IMPERSONATION
     # -----------------------------
-    institution_keywords = [
-        "department",
+    if any(k in text for k in [
+        "department of psychology",
         "university",
         "college",
-        "office",
-        "academic"
-    ]
-
-    if any(k in text for k in institution_keywords):
-        score += 15
+        "academic",
+        "institution"
+    ]):
+        score += 20
         signals.append("institution_impersonation")
 
     # -----------------------------
-    # EXTERNAL GMAIL SENDER
+    # EXTERNAL GMAIL
     # -----------------------------
     if "@gmail.com" in text:
         score += 10
         signals.append("external_email_domain")
 
     # -----------------------------
-    # URGENCY / PRESSURE LANGUAGE
+    # URGENCY / PRESSURE
     # -----------------------------
-    urgency_keywords = [
+    if any(k in text for k in [
         "urgent",
         "immediately",
         "apply now",
         "limited",
-        "expires soon"
-    ]
-
-    if any(k in text for k in urgency_keywords):
+        "expires"
+    ]):
         score += 10
         signals.append("urgency_manipulation")
 
