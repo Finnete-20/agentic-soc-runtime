@@ -1,42 +1,91 @@
-import os
-import json
-from openai import OpenAI
-
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
 def threat_analysis(state):
 
-    iocs = state.get("iocs", {}).get("features", {})
+    text = state.get("email", "").lower()
 
-    prompt = f"""
-You are a SOC Threat Analyst.
+    score = 0
+    signals = []
 
-Convert these indicators into structured threat intelligence.
+    # -----------------------------
+    # JOB SCAM DETECTION (CRITICAL)
+    # -----------------------------
+    job_keywords = [
+        "remote student worker",
+        "student worker",
+        "job",
+        "employment",
+        "position",
+        "hiring",
+        "opportunity",
+        "work from home",
+        "remote work"
+    ]
 
-Indicators:
-{iocs}
+    if any(k in text for k in job_keywords):
+        score += 30
+        signals.append("job_scam_pattern")
 
-Return JSON ONLY:
+    # -----------------------------
+    # DATA HARVESTING (VERY STRONG SIGNAL)
+    # -----------------------------
+    data_keywords = [
+        "phone number",
+        "full name",
+        "personal email",
+        "send your details",
+        "contact information",
+        "email address"
+    ]
 
-{{
-  "base_score": 0-100,
-  "signals": [],
-  "explanation": ""
-}}
-"""
+    if any(k in text for k in data_keywords):
+        score += 30
+        signals.append("data_harvesting_request")
 
-    response = client.chat.completions.create(
-        model="gpt-4.1-mini",
-        temperature=0,
-        messages=[
-            {"role": "system", "content": "SOC threat analyst."},
-            {"role": "user", "content": prompt}
-        ]
-    )
+    # -----------------------------
+    # INSTITUTION IMPERSONATION
+    # -----------------------------
+    institution_keywords = [
+        "department",
+        "university",
+        "college",
+        "office",
+        "academic"
+    ]
 
-    result = json.loads(response.choices[0].message.content)
+    if any(k in text for k in institution_keywords):
+        score += 15
+        signals.append("institution_impersonation")
+
+    # -----------------------------
+    # EXTERNAL GMAIL SENDER
+    # -----------------------------
+    if "@gmail.com" in text:
+        score += 10
+        signals.append("external_email_domain")
+
+    # -----------------------------
+    # URGENCY / PRESSURE LANGUAGE
+    # -----------------------------
+    urgency_keywords = [
+        "urgent",
+        "immediately",
+        "apply now",
+        "limited",
+        "expires soon"
+    ]
+
+    if any(k in text for k in urgency_keywords):
+        score += 10
+        signals.append("urgency_manipulation")
+
+    # -----------------------------
+    # FINAL NORMALIZATION
+    # -----------------------------
+    score = min(score, 100)
 
     return {
         **state,
-        "threat": result
+        "threat": {
+            "base_score": score,
+            "signals": signals
+        }
     }
