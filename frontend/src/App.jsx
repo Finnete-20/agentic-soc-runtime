@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { analyzeEmail } from "./api";
+console.log("SOC RESPONSE:", data);
 
 export default function App() {
   const [email, setEmail] = useState("");

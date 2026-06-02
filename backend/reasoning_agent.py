@@ -1,6 +1,7 @@
 import os
 import json
 from openai import OpenAI
+from config import LLM_TEMPERATURE
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
@@ -8,38 +9,34 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 def reasoning_agent(state):
 
     email = state.get("email", "")
-    iocs = state.get("iocs", {})
     threat = state.get("threat", {})
     memory = state.get("memory", {})
 
     base_score = threat.get("base_score", 0)
     memory_score = memory.get("memory_score", 0)
 
-    # FINAL SCORE (important fix)
     score = min(base_score + memory_score, 100)
 
     prompt = f"""
 You are a SENIOR SOC ANALYST.
 
+Return STRICT JSON ONLY.
+
 EMAIL:
 {email}
 
-IOC FEATURES:
-{iocs}
-
-THREAT SIGNALS:
+THREAT:
 {threat}
 
-MEMORY CONTEXT:
+MEMORY:
 {memory}
 
 Rules:
-- Job scams + data harvesting = HIGH RISK
-- Gmail recruiters impersonating institutions = SUSPICIOUS
+- Data harvesting + urgency = phishing
+- External Gmail + institution mention = suspicious
 - Multiple signals = escalate severity
 
-Return ONLY JSON:
-
+Return format:
 {{
   "score": {score},
   "verdict": "legit|suspicious|phishing",
@@ -50,9 +47,9 @@ Return ONLY JSON:
 
     response = client.chat.completions.create(
         model="gpt-4.1-mini",
-        temperature=0,
+        temperature=LLM_TEMPERATURE,
         messages=[
-            {"role": "system", "content": "Strict SOC phishing analyst."},
+            {"role": "system", "content": "Strict SOC classifier."},
             {"role": "user", "content": prompt}
         ]
     )
@@ -66,8 +63,8 @@ Return ONLY JSON:
         result = {
             "score": score,
             "verdict": "suspicious",
-            "signals": ["fallback_triggered"],
-            "soc_report": ["LLM parsing failed, fallback used"]
+            "signals": [],
+            "soc_report": ["fallback triggered"]
         }
 
     return {

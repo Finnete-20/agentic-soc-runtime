@@ -2,11 +2,13 @@ import re
 import os
 import json
 from openai import OpenAI
+from config import LLM_TEMPERATURE
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
 def extract_iocs(state):
+
     text = state["email"]
 
     urls = re.findall(r"https?://\S+", text)
@@ -15,48 +17,39 @@ def extract_iocs(state):
     prompt = f"""
 You are a SOC IOC extraction engine.
 
-Analyze this email:
+Return ONLY valid JSON.
 
+Email:
 {text}
 
-Return ONLY valid JSON (no markdown, no explanation):
-
-{{
-  "job_scam": true,
-  "credential_request": true,
-  "impersonation": true,
-  "data_harvesting": true,
-  "urgency_language": true,
-  "summary": "short security summary"
-}}
+Extract:
+- job_scam
+- credential_request
+- impersonation
+- data_harvesting
+- urgency_language
+- summary
 """
 
     response = client.chat.completions.create(
         model="gpt-4.1-mini",
-        temperature=0,
+        temperature=LLM_TEMPERATURE,
         messages=[
-            {"role": "system", "content": "Extract phishing indicators. Return strict JSON only."},
+            {"role": "system", "content": "Extract phishing indicators."},
             {"role": "user", "content": prompt}
         ]
     )
 
-    content = response.choices[0].message.content.strip()
-
-    # ---------------------------
-    # SAFE JSON CLEANING
-    # ---------------------------
-    content = content.replace("```json", "").replace("```", "").strip()
-
     try:
-        llm_data = json.loads(content)
+        llm_data = json.loads(response.choices[0].message.content)
     except:
         llm_data = {
-            "job_scam": "job" in text.lower(),
-            "credential_request": any(k in text.lower() for k in ["password", "login", "verify"]),
+            "job_scam": False,
+            "credential_request": False,
             "impersonation": False,
-            "data_harvesting": "email" in text.lower(),
-            "urgency_language": "urgent" in text.lower(),
-            "summary": "fallback_rule_based"
+            "data_harvesting": False,
+            "urgency_language": False,
+            "summary": "parse_error"
         }
 
     return {
