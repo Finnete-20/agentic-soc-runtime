@@ -1,7 +1,7 @@
 fastapi
 uvicorn
 pydantic
+python-dotenv
+openai
 requests
 langgraph
-openai
-python-dotenv
