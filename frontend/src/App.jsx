@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { analyzeEmail } from "./api";
-console.log("SOC RESPONSE:", data);
 
 export default function App() {
   const [email, setEmail] = useState("");
@@ -14,9 +13,12 @@ export default function App() {
 
     try {
       const data = await analyzeEmail(email);
+
+      console.log("SOC RESPONSE:", data);
+
       setResult(data);
     } catch (err) {
-      console.error(err);
+      console.error("Analysis failed:", err);
 
       setResult({
         verdict: "error",
@@ -26,15 +28,14 @@ export default function App() {
           soc_report: ["Backend connection failed"],
         },
       });
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
     <div className="min-h-screen bg-blue-900 text-white p-8">
       <div className="max-w-5xl mx-auto">
-
         <h1 className="text-4xl font-bold mb-2">
           🛡️ Agentic SOC Phishing Detection System
         </h1>
@@ -60,7 +61,6 @@ export default function App() {
 
         {result && (
           <div className="mt-8 bg-slate-800 rounded p-6">
-
             <h2 className="text-2xl font-bold mb-2">
               Verdict: {result.verdict}
             </h2>
@@ -104,10 +104,8 @@ export default function App() {
             <pre className="bg-black p-4 rounded overflow-auto text-sm">
               {JSON.stringify(result, null, 2)}
             </pre>
-
           </div>
         )}
-
       </div>
     </div>
   );
