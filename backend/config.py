@@ -1,7 +1,7 @@
+from dotenv import load_dotenv
 import os
 
-# Force deterministic behavior for grading
-DETERMINISTIC_MODE = True
+load_dotenv()
 
-# Lock temperature for all LLM calls
-LLM_TEMPERATURE = 0 if DETERMINISTIC_MODE else 0.2
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+VT_API_KEY = os.getenv("VT_API_KEY")
