@@ -10,17 +10,46 @@ from runtime_graph import app as agent_app
 from soc_dataset import SOC_DATASET
 
 
+# -----------------------------
+# SOC-STYLE LABEL MAPPING
+# -----------------------------
+
 def normalize_label(label):
-    return 1 if label == 1 else 0
+    """
+    Dataset label conversion:
+    0 = legit
+    1 = suspicious
+    2 = phishing
+    """
+
+    if label == 0 or label == "legit":
+        return 0
+    elif label == 1 or label == "suspicious":
+        return 1
+    elif label == 2 or label == "phishing":
+        return 2
+
+    return 0
 
 
 def normalize_pred(pred):
+    """
+    Model output normalization
+    """
+
     pred = str(pred).lower()
 
     if "phishing" in pred:
+        return 2
+    elif "suspicious" in pred:
         return 1
-    return 0
+    else:
+        return 0
 
+
+# -----------------------------
+# EVALUATION
+# -----------------------------
 
 def evaluate(dataset):
 
@@ -39,8 +68,11 @@ def evaluate(dataset):
 
         pred_label = result.get("verdict", "legit")
 
-        y_pred.append(normalize_pred(pred_label))
-        y_true.append(normalize_label(item["label"]))
+        true_val = normalize_label(item["label"])
+        pred_val = normalize_pred(pred_label)
+
+        y_true.append(true_val)
+        y_pred.append(pred_val)
 
         print("\n==============================")
         print("EMAIL:\n")
@@ -49,29 +81,47 @@ def evaluate(dataset):
         print("PREDICTED:", pred_label)
         print("==============================")
 
-    tp = sum(1 for t, p in zip(y_true, y_pred) if t == 1 and p == 1)
-    fp = sum(1 for t, p in zip(y_true, y_pred) if t == 0 and p == 1)
-    fn = sum(1 for t, p in zip(y_true, y_pred) if t == 1 and p == 0)
-    tn = sum(1 for t, p in zip(y_true, y_pred) if t == 0 and p == 0)
+    # -----------------------------
+    # CONFUSION MATRIX (3-class)
+    # -----------------------------
 
-    precision = tp / (tp + fp) if (tp + fp) else 0
-    recall = tp / (tp + fn) if (tp + fn) else 0
-    accuracy = (tp + tn) / len(y_true)
+    labels = [0, 1, 2]  # legit, suspicious, phishing
+
+    matrix = {
+        (i, j): 0 for i in labels for j in labels
+    }
+
+    for t, p in zip(y_true, y_pred):
+        matrix[(t, p)] += 1
+
+    print("\n==============================")
+    print("CONFUSION MATRIX")
+    print("==============================")
+
+    print("Rows = TRUE | Cols = PREDICTED")
+    print("0 = legit | 1 = suspicious | 2 = phishing\n")
+
+    for i in labels:
+        row = [matrix[(i, j)] for j in labels]
+        print(f"{i}: {row}")
+
+    # -----------------------------
+    # ACCURACY
+    # -----------------------------
+
+    correct = sum(1 for t, p in zip(y_true, y_pred) if t == p)
+    accuracy = correct / len(y_true)
 
     print("\n==============================")
     print("FINAL RESULTS")
     print("==============================")
 
-    print("Accuracy :", round(accuracy, 3))
-    print("Precision:", round(precision, 3))
-    print("Recall   :", round(recall, 3))
+    print("Accuracy:", round(accuracy, 3))
 
-    print("\nConfusion Matrix")
-    print("TP:", tp)
-    print("FP:", fp)
-    print("FN:", fn)
-    print("TN:", tn)
 
+# -----------------------------
+# RUN
+# -----------------------------
 
 if __name__ == "__main__":
     evaluate(SOC_DATASET)
