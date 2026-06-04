@@ -118,7 +118,7 @@ A full evaluation pipeline was introduced.
 
 Features:
 
-- Held-out dataset testing (20–40 emails)
+- Held-out dataset testing (40 emails)
 - Real precision / recall computation
 - Confusion matrix analysis
 - Edge-case phishing simulation

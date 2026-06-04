@@ -215,11 +215,11 @@ app = workflow.compile()
 - TailwindCSS
 ---
 ### How to Run
--Backend
+- Backend
 cd backend
 pip install -r requirements.txt
 uvicorn main:api --reload
--Frontend
+- Frontend
 cd frontend
 npm install
 npm run dev
@@ -230,7 +230,7 @@ Run evaluation pipeline:
 
 python evaluate.py
 
--Outputs:
+- Outputs:
 
 evaluation_result.json
 evaluation_report.json

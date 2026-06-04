@@ -4,9 +4,9 @@
 
 The Agentic SOC Phishing Detection System is an AI-powered Security Operations Center (SOC) assistant designed to detect phishing emails using a multi-agent architecture.
 
-The system simulates SOC-style investigation workflows using LangGraph, LLM-driven reasoning, tool-based intelligence, memory reasoning, and structured reporting.
+The system simulates real SOC investigation workflows using LangGraph, LLM-driven reasoning, real-time threat intelligence (VirusTotal API), memory-based reasoning, and structured reporting.
 
-The goal is explainability and structured decision-making rather than only classification accuracy.
+The goal is explainability, structured decision-making, and SOC-style reasoning rather than only classification accuracy.
 
 ---
 
@@ -14,7 +14,7 @@ The goal is explainability and structured decision-making rather than only class
 
 ### Multi-Agent SOC Pipeline
 
-The system uses a structured SOC-style agentic workflow that simulates real security analyst reasoning.
+The system uses a structured SOC-style workflow that simulates real security analyst reasoning.
 
 The pipeline is decomposed into five specialized agents:
 
@@ -38,22 +38,38 @@ Build structured intelligence from raw email input.
 
 ### 2. Threat Agent
 
-Evaluates the extracted indicators and assigns initial threat signals.
+Evaluates extracted indicators and assigns initial threat signals.
 
 It analyzes:
 
 - Impersonation attempts (fake organizations or domains)
 - Social engineering patterns
 - Urgency manipulation ("act now", "limited time")
-- Monetary lure (stipends, rewards, refunds)
-- External communication patterns
+- External email domains
+- Data harvesting indicators (Google Forms, surveys)
 
 Purpose:
 Model attacker intent and behavioral patterns.
 
 ---
 
-### 3. Memory Agent
+### 3. VirusTotal Agent (Threat Intelligence Layer)
+
+Performs real-time URL reputation analysis using the VirusTotal API.
+
+It provides:
+
+- Malicious score
+- Suspicious score
+- Harmless score
+- Undetected classification
+
+Purpose:
+Validate extracted URLs using external threat intelligence sources.
+
+---
+
+### 4. Memory Agent
 
 Maintains lightweight historical context of known attack patterns.
 
@@ -61,82 +77,78 @@ It can match:
 
 - Previously seen phishing patterns
 - Repeated scam structures
-- Known malicious keywords or themes
+- Known malicious domains and behaviors
 
 Purpose:
 Improve detection consistency across repeated attack styles.
 
 ---
 
-### 4. Reasoning Agent (LLM-Powered)
+### 5. Reasoning Agent (LLM-Powered SOC Analyst)
 
-Aggregates signals from all previous agents and computes a final risk score.
+Aggregates signals from all previous agents and computes final classification.
 
-This node uses an LLM-based SOC analyst to interpret signals, assess context, and produce a structured decision.
-
-It combines:
+This node uses an LLM (GPT-4.1-mini) to interpret:
 
 - IOC signals
-- Threat intelligence signals
+- Threat intelligence results
+- VirusTotal API outputs
 - Memory matches
-- LLM reasoning over full context
 
-Then assigns:
+It produces:
 
 - Risk score (0–100)
-- Final classification decision (legit / suspicious / phishing)
+- Final classification (legit / suspicious / phishing)
+- Structured SOC reasoning
 
 Purpose:
-Act as the LLM-driven decision engine of the SOC workflow, replacing rule-based classification.
+Act as an AI SOC analyst replacing rule-based classification.
 
 ---
 
-### 5. Reporting Agent (LLM-Assisted SOC Output)
+### 6. Reporting Agent
 
-Generates the final structured SOC output.
+Generates final SOC-style structured output.
 
 It returns:
 
-- Final verdict (legit / suspicious / phishing)
+- Final verdict
 - Risk score
 - Extracted indicators
-- Supporting reasoning context
-
-The report is generated in a SOC analyst style using LLM-based summarization of all agent outputs.
+- SOC explanation summary
 
 Purpose:
-Provide explainable SOC-style output for analysts.
+Provide explainable security output for analysts.
 
 ---
 
 ## Tool-Based Architecture
 
-A modular tool layer is used for threat intelligence simulation.
+A modular tool layer is used for threat intelligence enrichment.
 
 Capabilities:
 
 - URL reputation checking
-- Mock VirusTotal integration (tool-based enrichment)
+- Real VirusTotal API integration
 - Tool abstraction layer
-- Extensible SOC tool design
+- Extensible SOC intelligence design
 
 Future integrations:
 
-- VirusTotal API
 - AbuseIPDB
-- URLScan
+- URLScan.io
 - OpenCTI
 
 ---
 
 ## Memory System
 
-The system maintains historical context:
+The system maintains historical security context:
 
-- Stores past incidents
-- Detects repeated malicious patterns
+- Stores known phishing patterns
+- Detects repeated attack structures
 - Improves contextual reasoning
-- Enhances risk scoring
+- Enhances consistency in risk scoring
 
 ---
 
@@ -161,27 +173,24 @@ IOC Agent
     ↓
 Threat Agent
     ↓
+VirusTotal Agent
+    ↓
 Memory Agent
     ↓
 Reasoning Agent (LLM)
     ↓
-Reporting Agent (LLM)
+Reporting Agent
     ↓
 Final Classification Output
-
-LangGraph Workflow
-
-Workflow:
-
-ioc → threat → memory → reasoning → report
 ```
 ---
-### Implementation:
+### LangGraph Workflow
 
 workflow = StateGraph(AgentState)
 
 workflow.add_node("ioc", extract_iocs)
 workflow.add_node("threat", threat_analysis)
+workflow.add_node("virustotal", virustotal_agent)
 workflow.add_node("memory", memory_agent)
 workflow.add_node("reasoning", reasoning_agent)
 workflow.add_node("report", reporting_agent)
@@ -189,66 +198,67 @@ workflow.add_node("report", reporting_agent)
 workflow.set_entry_point("ioc")
 
 workflow.add_edge("ioc", "threat")
-workflow.add_edge("threat", "memory")
+workflow.add_edge("threat", "virustotal")
+workflow.add_edge("virustotal", "memory")
 workflow.add_edge("memory", "reasoning")
 workflow.add_edge("reasoning", "report")
 
 app = workflow.compile()
-
 ---
 ### Tech Stack
-
 - Python
 - FastAPI
 - LangGraph
 - OpenAI GPT-4.1-mini (LLM reasoning layer)
+- VirusTotal API (real-time threat intelligence)
 - React
 - TailwindCSS
-
 ---
 ### How to Run
-Backend
-
+- Backend
 cd backend
-
 pip install -r requirements.txt
-
 uvicorn main:api --reload
-
-Frontend
-
+- Frontend
 cd frontend
-
 npm install
-
 npm run dev
-
 ---
-
 ### Evaluation
+
+Run evaluation pipeline:
 
 python evaluate.py
 
-backend/evaluation/evaluation.md
+- Outputs:
 
-backend/evaluation/data
-
-Evaluation includes:
-
-Accuracy
-Precision
-Recall
+evaluation_result.json
+evaluation_report.json
+SOC metrics (accuracy, precision, recall)
 Confusion matrix
-Multi-scenario phishing dataset (40 emails including edge cases)
-
 ---
+### Dataset
+
+Location:
+
+backend/soc_dataset.py
+
+Includes:
+
+Phishing emails
+Legitimate emails
+Edge-case phishing (Google Forms, spoofing, HR scams)
+
+Total samples: ~40
+---
+
 ### Purpose
 
 This system demonstrates:
 
-- Multi-agent reasoning (LangGraph workflow execution)
-- LLM-assisted SOC decision-making
-- Tool-based intelligence (mock threat enrichment)
-- Memory-enhanced detection
+- Multi-agent SOC reasoning (LangGraph workflow execution)
+- LLM-assisted security decision-making
+- Real-time threat intelligence integration (VirusTotal API)
+- Memory-enhanced detection system
 - Explainable phishing detection
-- Real evaluation using labeled datasets
+- Evaluation-driven AI security system
