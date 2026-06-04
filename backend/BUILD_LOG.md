@@ -17,6 +17,7 @@ The goal of this system is to:
 - Simulate SOC analyst investigation workflows
 - Use multi-agent reasoning for phishing detection
 - Combine tool-based intelligence and memory
+- Use LLM-driven reasoning for final classification
 - Produce explainable security decisions
 - Support evaluation-driven development
 
@@ -62,6 +63,7 @@ A tool system was added to simulate SOC intelligence sources.
 Implemented:
 
 - URL reputation tool
+- Mock VirusTotal integration
 - Tool registry pattern
 - Modular intelligence layer
 
@@ -82,14 +84,15 @@ Capabilities:
 - Track known malicious domains
 - Match recurring attack patterns
 - Improve contextual awareness
+- Support pattern-based scoring consistency
 
 This improved detection of repeated phishing campaigns.
 
 ---
 
-### Phase 5 — Risk Reasoning Engine
+### Phase 5 — Risk Reasoning Engine (LLM-Enhanced)
 
-The system evolved from rule-based scoring to structured risk reasoning.
+The system evolved from rule-based scoring to structured reasoning enhanced with LLM decision-making.
 
 Risk score model:
 
@@ -102,6 +105,9 @@ The engine aggregates:
 - IOC signals
 - Threat intelligence results
 - Memory matches
+- LLM-based reasoning over full context
+
+This replaces static classification logic with SOC-style analytical reasoning.
 
 ---
 
@@ -111,17 +117,18 @@ A full evaluation pipeline was introduced.
 
 Features:
 
-- Held-out dataset testing
-- Baseline comparison model
-- Confusion analysis
-- Risk distribution tracking
-- Performance reporting
+- Held-out dataset testing (20–40 emails)
+- Real precision / recall computation
+- Confusion matrix analysis
+- Edge-case phishing simulation
+- Performance reporting via evaluate.py
 
 Dataset includes:
 
 - Phishing emails
 - Legitimate emails
 - Edge-case ambiguous emails
+- Training-simulation emails (false positives tests)
 
 ---
 
@@ -152,78 +159,3 @@ workflow.add_edge("memory", "reasoning")
 workflow.add_edge("reasoning", "report")
 
 app = workflow.compile()
-```
-
-## Repository Structure
-
-```text
-agentic-soc-runtime/
-│
-├── backend/
-│   ├── main.py
-│   ├── runtime_graph.py
-│   ├── state.py
-│   ├── evaluate.py
-│   │
-│   ├── ioc_agent.py
-│   ├── threat_agent.py
-│   ├── memory_agent.py
-│   ├── reasoning_agent.py
-│   ├── reporting_agent.py
-│   │
-│   ├── model_router.py
-│   │
-│   ├── tools/
-│   │   ├── tool_registry.py
-│   │   └── url_tool.py
-│   │
-│   ├── memory/
-│   │   └── incident_memory.json
-│   │
-│   └── evaluation/
-│       ├── generate_dataset.py
-│       ├── evaluation.md
-│       ├── evaluation_report.json
-│       └── data/
-│           ├── phishing_samples.json
-│           ├── legit_samples.json
-│           └── edge_cases.json
-│
-├── frontend/
-│   ├── src/
-│   ├── public/
-│   ├── index.html
-│   ├── package.json
-│   ├── vite.config.js
-│   ├── tailwind.config.js
-│   └── postcss.config.js
-│
-├── README.md
-├── BUILD_LOG.md
-└── .gitignore
-```
-## SOC workflows are naturally multi-step and require:
-
-decomposition of tasks
-
-traceable reasoning
-
-modular intelligence
-
-Why Tool Abstraction
-
-## Real SOC systems rely on external tools such as:
-
-VirusTotal
-AbuseIPDB
-URLScan
-
-This system simulates that design pattern.
-
-Why Memory Layer
-
-## Security analysis improves when:
-
-- past incidents are reused
-- patterns are recognized
-- repeated attacks are tracked
