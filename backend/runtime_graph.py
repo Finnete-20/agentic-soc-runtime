@@ -6,6 +6,7 @@ from threat_agent import threat_analysis
 from memory_agent import memory_agent
 from reasoning_agent import reasoning_agent
 from reporting_agent import reporting_agent
+from virustotal_agent import virustotal_agent  # ✅ FIXED
 
 # ✅ FIX: make sure this exists in virustotal_agent.py
 from virustotal_agent import virustotal_agent
