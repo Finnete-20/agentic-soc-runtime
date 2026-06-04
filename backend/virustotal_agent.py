@@ -1,31 +1,34 @@
 import time
-import base64
 import requests
 from config import VT_API_KEY
 
 
 def virustotal_tool(url):
+    """
+    Real VirusTotal API integration
+    """
 
     if not VT_API_KEY:
-        return {"url": url, "error": "Missing VT_API_KEY"}
+        return {"url": url, "error": "Missing VT_API_KEY (check .env + config.py)"}
 
-    headers = {"x-apikey": VT_API_KEY}
+    headers = {
+        "x-apikey": VT_API_KEY
+    }
 
     try:
-        # encode URL (VirusTotal requirement)
-        url_id = base64.urlsafe_b64encode(url.encode()).decode().strip("=")
-
-        # submit URL
+        # STEP 1: submit URL
         submit = requests.post(
-            f"https://www.virustotal.com/api/v3/urls/{url_id}",
-            headers=headers
+            "https://www.virustotal.com/api/v3/urls",
+            headers=headers,
+            data={"url": url}
         )
 
         if submit.status_code not in [200, 201]:
             return {"url": url, "error": submit.text}
 
-        analysis_id = submit.json().get("data", {}).get("id")
+        analysis_id = submit.json()["data"]["id"]
 
+        # STEP 2: poll result
         analysis_url = f"https://www.virustotal.com/api/v3/analyses/{analysis_id}"
 
         for _ in range(5):
@@ -37,9 +40,10 @@ def virustotal_tool(url):
                 continue
 
             data = res.json()
+
             stats = data.get("data", {}).get("attributes", {}).get("stats", {})
 
-            if isinstance(stats, dict) and stats:
+            if stats:
                 return {
                     "url": url,
                     "malicious": stats.get("malicious", 0),
@@ -50,10 +54,8 @@ def virustotal_tool(url):
 
         return {
             "url": url,
-            "status": "pending",
-            "malicious": 0,
-            "suspicious": 0,
-            "harmless": 0
+            "analysis_id": analysis_id,
+            "status": "pending"
         }
 
     except Exception as e:
@@ -61,7 +63,6 @@ def virustotal_tool(url):
 
 
 def virustotal_agent(state):
-
     urls = state.get("iocs", {}).get("urls", [])
 
     results = [virustotal_tool(url) for url in urls]
