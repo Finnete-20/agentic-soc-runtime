@@ -10,6 +10,18 @@ from runtime_graph import app as agent_app
 from soc_dataset import SOC_DATASET
 
 
+def normalize_label(label):
+    return 1 if label == 1 else 0
+
+
+def normalize_pred(pred):
+    pred = str(pred).lower()
+
+    if "phishing" in pred:
+        return 1
+    return 0
+
+
 def evaluate(dataset):
 
     y_true = []
@@ -25,16 +37,16 @@ def evaluate(dataset):
             "email": item["email"]
         })
 
-        pred = result.get("verdict", "legit")
+        pred_label = result.get("verdict", "legit")
 
-        y_pred.append(1 if pred == "phishing" else 0)
-        y_true.append(item["label"])
+        y_pred.append(normalize_pred(pred_label))
+        y_true.append(normalize_label(item["label"]))
 
         print("\n==============================")
         print("EMAIL:\n")
         print(item["email"].strip())
         print("EXPECTED:", item["label"])
-        print("PREDICTED:", pred)
+        print("PREDICTED:", pred_label)
         print("==============================")
 
     tp = sum(1 for t, p in zip(y_true, y_pred) if t == 1 and p == 1)

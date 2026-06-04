@@ -6,7 +6,7 @@
 
 This project implements an Agentic Security Operations Center (SOC) system designed to detect phishing emails using a multi-agent architecture.
 
-The system replicates real SOC workflows by breaking down investigation into structured reasoning stages powered by LangGraph.
+The system replicates real SOC workflows by breaking down investigation into structured reasoning stages powered by LangGraph and enhanced with real threat intelligence APIs.
 
 ---
 
@@ -18,6 +18,7 @@ The goal of this system is to:
 - Use multi-agent reasoning for phishing detection
 - Combine tool-based intelligence and memory
 - Use LLM-driven reasoning for final classification
+- Integrate real-world threat intelligence (VirusTotal API)
 - Produce explainable security decisions
 - Support evaluation-driven development
 
@@ -63,14 +64,14 @@ A tool system was added to simulate SOC intelligence sources.
 Implemented:
 
 - URL reputation tool
-- Mock VirusTotal integration
+- VirusTotal API integration (REAL)
 - Tool registry pattern
 - Modular intelligence layer
 
 Purpose:
 
 - Decouple tools from agents
-- Enable future API integrations
+- Enable production-grade threat intelligence integration
 - Improve system scalability
 
 ---
@@ -92,7 +93,7 @@ This improved detection of repeated phishing campaigns.
 
 ### Phase 5 — Risk Reasoning Engine (LLM-Enhanced)
 
-The system evolved from rule-based scoring to structured reasoning enhanced with LLM decision-making.
+The system evolved from rule-based scoring to structured reasoning enhanced with LLM decision-making using OpenAI GPT-4.1-mini.
 
 Risk score model:
 
@@ -103,7 +104,7 @@ Risk score model:
 The engine aggregates:
 
 - IOC signals
-- Threat intelligence results
+- Threat intelligence results (including VirusTotal API stats)
 - Memory matches
 - LLM-based reasoning over full context
 
@@ -122,13 +123,14 @@ Features:
 - Confusion matrix analysis
 - Edge-case phishing simulation
 - Performance reporting via evaluate.py
+- JSON export of evaluation results (evaluation_result.json)
 
 Dataset includes:
 
 - Phishing emails
 - Legitimate emails
 - Edge-case ambiguous emails
-- Training-simulation emails (false positives tests)
+- Real-world phishing simulation samples
 
 ---
 
@@ -136,7 +138,7 @@ Dataset includes:
 
 ### Execution Flow
 
-ioc → threat → memory → reasoning → report
+ioc → threat → virustotal → memory → reasoning → report
 
 ---
 
@@ -147,6 +149,7 @@ workflow = StateGraph(AgentState)
 
 workflow.add_node("ioc", extract_iocs)
 workflow.add_node("threat", threat_analysis)
+workflow.add_node("virustotal", virustotal_agent)
 workflow.add_node("memory", memory_agent)
 workflow.add_node("reasoning", reasoning_agent)
 workflow.add_node("report", reporting_agent)
@@ -154,7 +157,8 @@ workflow.add_node("report", reporting_agent)
 workflow.set_entry_point("ioc")
 
 workflow.add_edge("ioc", "threat")
-workflow.add_edge("threat", "memory")
+workflow.add_edge("threat", "virustotal")
+workflow.add_edge("virustotal", "memory")
 workflow.add_edge("memory", "reasoning")
 workflow.add_edge("reasoning", "report")
 

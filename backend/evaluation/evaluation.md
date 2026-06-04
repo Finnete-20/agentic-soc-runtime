@@ -4,9 +4,9 @@
 
 ## 1. Overview
 
-This evaluation measures the performance of an Agentic SOC Phishing Detection System built using a multi-agent architecture (LangGraph), LLM-assisted reasoning, tool-based intelligence, and memory-augmented decision-making.
+This evaluation measures the performance of an Agentic SOC Phishing Detection System built using a multi-agent architecture (LangGraph), LLM-assisted reasoning, real-time threat intelligence (VirusTotal API), tool-based intelligence, and memory-augmented decision-making.
 
-The objective is to assess how well the system simulates SOC analyst reasoning compared to a baseline heuristic classifier.
+The objective is to assess how well the system simulates SOC analyst reasoning compared to a baseline heuristic classifier and how external intelligence improves classification quality.
 
 ---
 
@@ -15,10 +15,11 @@ The objective is to assess how well the system simulates SOC analyst reasoning c
 The evaluation focuses on:
 
 - Effectiveness of multi-agent reasoning pipeline
+- Impact of real VirusTotal API integration on detection accuracy
 - Comparison against baseline keyword classifier
 - Contribution of memory and threat intelligence signals
-- Robustness on edge-case emails
-- Consistency of SOC-style risk scoring
+- Robustness on edge-case emails (Google Forms, spoofing, etc.)
+- Consistency of SOC-style risk scoring and explainability
 
 ---
 
@@ -32,9 +33,11 @@ The evaluation dataset contains **20–40 samples (current experimental set)** i
 | Legitimate   | Safe email samples           | ~40%    |
 | Edge Cases   | Ambiguous security emails    | ~20%    |
 
+---
+
 ## Dataset location:
 
-backend/evaluation/data/
+backend/soc_dataset.py (runtime dataset loader)
 
 ---
 
@@ -51,14 +54,16 @@ Each sample is processed using two systems:
 ```text
 Email Input
     ↓
-IOC Extraction
+IOC Extraction (URLs, emails, features)
     ↓
-Threat Intelligence
+Threat Intelligence Scoring
     ↓
-Memory Lookup
+VirusTotal API Analysis (real-time URL reputation)
     ↓
-LLM-Based Reasoning Agent
+Memory Lookup (historical pattern matching)
     ↓
-LLM-Assisted Reporting Agent
+LLM-Based Reasoning Agent (GPT-4.1-mini)
     ↓
-Final Classification Output
+SOC Report Generation Agent
+    ↓
+Final Classification Output (phishing / suspicious / legit)
