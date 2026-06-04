@@ -1,53 +1,45 @@
-from langgraph.graph import StateGraph, END
+from langgraph.graph import StateGraph
 from state import AgentState
 
 from ioc_agent import extract_iocs
-from virustotal_agent import virustotal_agent
 from threat_agent import threat_analysis
 from memory_agent import memory_agent
 from reasoning_agent import reasoning_agent
 from reporting_agent import reporting_agent
-from critique_agent import critique_agent
 
+# ✅ FIX: make sure this exists in virustotal_agent.py
+from virustotal_agent import virustotal_agent
+
+
+# -----------------------------
+# BUILD LANGGRAPH WORKFLOW
+# -----------------------------
 
 workflow = StateGraph(AgentState)
 
-# nodes
+# Nodes
 workflow.add_node("ioc", extract_iocs)
-workflow.add_node("virustotal", virustotal_agent)
 workflow.add_node("threat", threat_analysis)
 workflow.add_node("memory", memory_agent)
+
+# 🔥 VirusTotal inserted AFTER IOC for enrichment
+workflow.add_node("virustotal", virustotal_agent)
+
 workflow.add_node("reasoning", reasoning_agent)
-workflow.add_node("critique", critique_agent)
 workflow.add_node("report", reporting_agent)
 
-# flow
+# Entry point
 workflow.set_entry_point("ioc")
 
-workflow.add_edge("ioc", "virustotal")
-workflow.add_edge("virustotal", "threat")
+# Flow (IMPORTANT ORDER)
+workflow.add_edge("ioc", "threat")
 workflow.add_edge("threat", "memory")
-workflow.add_edge("memory", "reasoning")
 
-# 🔥 LOOP (real agent behavior)
-workflow.add_edge("reasoning", "critique")
+# 🔥 VirusTotal step (new intelligence layer)
+workflow.add_edge("memory", "virustotal")
 
-def route_after_critique(state):
-    decision = state.get("critique", {}).get("decision", "approve")
+workflow.add_edge("virustotal", "reasoning")
+workflow.add_edge("reasoning", "report")
 
-    if decision == "revise":
-        return "reasoning"   # loop back
-    return "report"
-
-workflow.add_conditional_edges(
-    "critique",
-    route_after_critique,
-    {
-        "reasoning": "reasoning",
-        "report": "report"
-    }
-)
-
-workflow.add_edge("report", END)
-
+# Compile app
 app = workflow.compile()
