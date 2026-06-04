@@ -9,39 +9,38 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 def reasoning_agent(state):
 
     email = state.get("email", "")
+    iocs = state.get("iocs", {})
     threat = state.get("threat", {})
     memory = state.get("memory", {})
-
-    base_score = threat.get("base_score", 0)
-    memory_score = memory.get("memory_score", 0)
-
-    score = min(base_score + memory_score, 100)
 
     prompt = f"""
 You are a SENIOR SOC ANALYST.
 
-Return STRICT JSON ONLY.
+Analyze the email using:
 
-EMAIL:
-{email}
+IOC DATA:
+{iocs}
 
-THREAT:
+THREAT SIGNALS:
 {threat}
 
-MEMORY:
+MEMORY PATTERNS:
 {memory}
 
-Rules:
-- Data harvesting + urgency = phishing
-- External Gmail + institution mention = suspicious
-- Multiple signals = escalate severity
+TASK:
+1. Decide if phishing / suspicious / legit
+2. Explain reasoning clearly
+3. Extract signals
+4. Provide SOC report bullets
 
-Return format:
+Return STRICT JSON:
+
 {{
-  "score": {score},
-  "verdict": "legit|suspicious|phishing",
+  "verdict": "phishing|suspicious|legit",
+  "score": 0-100,
   "signals": [],
-  "soc_report": []
+  "soc_report": [],
+  "confidence": 0-100
 }}
 """
 
@@ -49,7 +48,7 @@ Return format:
         model="gpt-4.1-mini",
         temperature=LLM_TEMPERATURE,
         messages=[
-            {"role": "system", "content": "Strict SOC classifier."},
+            {"role": "system", "content": "You are a SOC analyst AI."},
             {"role": "user", "content": prompt}
         ]
     )
@@ -61,10 +60,11 @@ Return format:
         result = json.loads(content)
     except:
         result = {
-            "score": score,
             "verdict": "suspicious",
+            "score": 50,
             "signals": [],
-            "soc_report": ["fallback triggered"]
+            "soc_report": ["parse fallback"],
+            "confidence": 50
         }
 
     return {

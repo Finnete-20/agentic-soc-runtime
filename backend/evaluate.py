@@ -1,89 +1,65 @@
-import json
-from sklearn.metrics import confusion_matrix, roc_curve, auc
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+if not os.getenv("OPENAI_API_KEY"):
+    raise ValueError("OPENAI_API_KEY missing in .env")
 
 from runtime_graph import app as agent_app
+from soc_dataset import SOC_DATASET
 
 
-def load_data():
-    with open("evaluation/data/phishing_samples.json") as f:
-        phishing = json.load(f)
-
-    with open("evaluation/data/legit_samples.json") as f:
-        legit = json.load(f)
-
-    return phishing + legit
-
-
-def run_system(email):
-    return agent_app.invoke({"email": email})
-
-
-def run_baseline(email):
-    keywords = [
-        "urgent", "verify", "login", "password",
-        "account", "click", "suspended",
-        "phone", "email address"
-    ]
-    score = sum(1 for k in keywords if k in email.lower())
-    return "phishing" if score >= 2 else "legit"
-
-
-def label_to_num(label):
-    return 1 if label == "phishing" else 0
-
-
-def risk_to_prob(risk):
-    return risk / 100.0
-
-
-def evaluate():
-
-    data = load_data()
+def evaluate(dataset):
 
     y_true = []
-    y_agent = []
-    y_base = []
+    y_pred = []
 
-    y_agent_prob = []
-    y_base_prob = []
+    print("\n==============================")
+    print("TOTAL EMAILS:", len(dataset))
+    print("==============================")
 
-    for i, item in enumerate(data):
+    for item in dataset:
 
-        email = item["email"]
-        label = item["label"]
+        result = agent_app.invoke({
+            "email": item["email"]
+        })
 
-        result = run_system(email)
-        risk = result.get("risk_score", 0)
+        pred = result.get("verdict", "legit")
 
-        agent_label = "phishing" if risk >= 40 else "legit"
-        base_label = run_baseline(email)
+        y_pred.append(1 if pred == "phishing" else 0)
+        y_true.append(item["label"])
 
-        y_true.append(label_to_num(label))
-        y_agent.append(label_to_num(agent_label))
-        y_base.append(label_to_num(base_label))
+        print("\n==============================")
+        print("EMAIL:\n")
+        print(item["email"].strip())
+        print("EXPECTED:", item["label"])
+        print("PREDICTED:", pred)
+        print("==============================")
 
-        y_agent_prob.append(risk_to_prob(risk))
-        y_base_prob.append(0.8 if base_label == "phishing" else 0.2)
+    tp = sum(1 for t, p in zip(y_true, y_pred) if t == 1 and p == 1)
+    fp = sum(1 for t, p in zip(y_true, y_pred) if t == 0 and p == 1)
+    fn = sum(1 for t, p in zip(y_true, y_pred) if t == 1 and p == 0)
+    tn = sum(1 for t, p in zip(y_true, y_pred) if t == 0 and p == 0)
 
-        if i % 100 == 0:
-            print(f"Processed {i}/{len(data)}")
+    precision = tp / (tp + fp) if (tp + fp) else 0
+    recall = tp / (tp + fn) if (tp + fn) else 0
+    accuracy = (tp + tn) / len(y_true)
 
-    # ---------------- CONFUSION MATRIX ----------------
-    print("\nAgent Confusion Matrix:")
-    print(confusion_matrix(y_true, y_agent))
+    print("\n==============================")
+    print("FINAL RESULTS")
+    print("==============================")
 
-    print("\nBaseline Confusion Matrix:")
-    print(confusion_matrix(y_true, y_base))
+    print("Accuracy :", round(accuracy, 3))
+    print("Precision:", round(precision, 3))
+    print("Recall   :", round(recall, 3))
 
-    # ---------------- ROC AUC ----------------
-    fpr_a, tpr_a, _ = roc_curve(y_true, y_agent_prob)
-    fpr_b, tpr_b, _ = roc_curve(y_true, y_base_prob)
-
-    print("\nAgent AUC:", auc(fpr_a, tpr_a))
-    print("Baseline AUC:", auc(fpr_b, tpr_b))
-
-    print("\nDONE")
+    print("\nConfusion Matrix")
+    print("TP:", tp)
+    print("FP:", fp)
+    print("FN:", fn)
+    print("TN:", tn)
 
 
 if __name__ == "__main__":
-    evaluate()
+    evaluate(SOC_DATASET)
