@@ -5,22 +5,19 @@ from config import VT_API_KEY
 
 
 def virustotal_tool(url: str):
-    """
-    VirusTotal URL reputation lookup.
-
-    Uses the URL lookup endpoint directly instead of
-    submitting a new scan every time.
-    """
 
     if not VT_API_KEY:
-        return {"url": url, "error": "Missing VT_API_KEY"}
+        return {
+            "url": url,
+            "error": "Missing VT_API_KEY"
+        }
 
     try:
+
         headers = {
             "x-apikey": VT_API_KEY
         }
 
-        # VirusTotal URL ID format
         url_id = base64.urlsafe_b64encode(
             url.encode()
         ).decode().strip("=")
@@ -62,12 +59,15 @@ def virustotal_tool(url: str):
 
 
 def virustotal_agent(state):
+
     urls = state.get("iocs", {}).get("urls", [])
 
     results = []
 
     for url in urls:
-        results.append(virustotal_tool(url))
+        results.append(
+            virustotal_tool(url)
+        )
 
     return {
         **state,
