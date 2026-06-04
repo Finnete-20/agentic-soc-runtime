@@ -1,63 +1,73 @@
-import time
+import base64
 import requests
+
 from config import VT_API_KEY
 
 
 def virustotal_tool(url: str):
+    """
+    VirusTotal URL reputation lookup.
+
+    Uses the URL lookup endpoint directly instead of
+    submitting a new scan every time.
+    """
+
     if not VT_API_KEY:
         return {"url": url, "error": "Missing VT_API_KEY"}
 
-    headers = {"x-apikey": VT_API_KEY}
-
     try:
-        # STEP 1: submit URL
-        submit = requests.post(
-            "https://www.virustotal.com/api/v3/urls",
+        headers = {
+            "x-apikey": VT_API_KEY
+        }
+
+        # VirusTotal URL ID format
+        url_id = base64.urlsafe_b64encode(
+            url.encode()
+        ).decode().strip("=")
+
+        response = requests.get(
+            f"https://www.virustotal.com/api/v3/urls/{url_id}",
             headers=headers,
-            data={"url": url}
+            timeout=15
         )
 
-        if submit.status_code not in [200, 201]:
-            return {"url": url, "error": submit.text}
+        if response.status_code != 200:
+            return {
+                "url": url,
+                "error": response.text
+            }
 
-        analysis_id = submit.json()["data"]["id"]
+        data = response.json()
 
-        # STEP 2: poll results
-        analysis_url = f"https://www.virustotal.com/api/v3/analyses/{analysis_id}"
-
-        for _ in range(5):
-            time.sleep(2)
-
-            res = requests.get(analysis_url, headers=headers)
-            if res.status_code != 200:
-                continue
-
-            data = res.json()
-            stats = data.get("data", {}).get("attributes", {}).get("stats", {})
-
-            if stats:
-                return {
-                    "url": url,
-                    "malicious": stats.get("malicious", 0),
-                    "suspicious": stats.get("suspicious", 0),
-                    "harmless": stats.get("harmless", 0),
-                    "source": "virustotal_api"
-                }
+        stats = (
+            data.get("data", {})
+            .get("attributes", {})
+            .get("last_analysis_stats", {})
+        )
 
         return {
             "url": url,
-            "analysis_id": analysis_id,
-            "status": "pending"
+            "malicious": stats.get("malicious", 0),
+            "suspicious": stats.get("suspicious", 0),
+            "harmless": stats.get("harmless", 0),
+            "undetected": stats.get("undetected", 0),
+            "source": "virustotal_api"
         }
 
     except Exception as e:
-        return {"url": url, "error": str(e)}
+        return {
+            "url": url,
+            "error": str(e)
+        }
 
 
 def virustotal_agent(state):
     urls = state.get("iocs", {}).get("urls", [])
 
-    results = [virustotal_tool(url) for url in urls]
+    results = []
+
+    for url in urls:
+        results.append(virustotal_tool(url))
 
     return {
         **state,
