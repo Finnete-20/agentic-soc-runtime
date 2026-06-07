@@ -17,10 +17,10 @@ def reasoning_agent(state):
     prompt = f"""
 You are an autonomous SOC reasoning engine inside a cybersecurity system.
 
-You are NOT a rule-based classifier.
+You are NOT rule-based.
 You are a decision-making SOC analyst.
 
-Your job is to analyze all signals and make a final judgment.
+Your job is to analyze all signals and produce a final classification.
 
 ========================
 EMAIL
@@ -51,22 +51,20 @@ VIRUSTOTAL RESULTS
 INSTRUCTIONS
 ========================
 
-You must:
-- Analyze all signals holistically
-- Detect phishing patterns, social engineering, and suspicious intent
-- Avoid relying on any single signal (including VirusTotal)
-- Reason like a human SOC analyst
+- Analyze all signals together (do NOT use hardcoded rules)
+- VirusTotal is only weak supporting evidence
+- External sender or Google Forms may increase risk but are not decisive alone
+- Think like a SOC analyst reviewing a real incident
 
-Guidance:
-- VirusTotal is only supporting evidence, not ground truth
-- External sender may increase risk but is not decisive alone
-- Google Forms / surveys can be legitimate OR malicious depending on context
-- Do NOT use fixed thresholds or hardcoded rules
+Classify into EXACTLY ONE:
 
-Classify the email as one of:
-- "legit"
-- "suspicious"
-- "phishing"
+- legit
+- suspicious
+- phishing
+
+IMPORTANT:
+- verdict MUST be exactly one of: legit, suspicious, phishing
+- NEVER return "error", "unknown", or null
 
 ========================
 OUTPUT FORMAT (STRICT JSON ONLY)
@@ -74,13 +72,13 @@ OUTPUT FORMAT (STRICT JSON ONLY)
 
 Return ONLY valid JSON:
 
-{
+{{
   "verdict": "legit | suspicious | phishing",
   "score": 0,
   "signals": [],
   "soc_report": [],
   "confidence": 0
-}
+}}
 """
 
     response = client.chat.completions.create(
@@ -100,7 +98,7 @@ Return ONLY valid JSON:
 
     content = response.choices[0].message.content.strip()
 
-    # clean markdown if model adds it
+    # Clean markdown fences if any
     content = (
         content.replace("```json", "")
         .replace("```", "")
@@ -110,17 +108,32 @@ Return ONLY valid JSON:
     try:
         result = json.loads(content)
     except Exception:
+        # SAFE FALLBACK (prevents system crash)
         result = {
             "verdict": "suspicious",
             "score": 50,
             "signals": ["parse_error"],
-            "soc_report": ["LLM output parsing failed"],
+            "soc_report": ["LLM output parsing failed; defaulting to suspicious."],
             "confidence": 50
         }
+
+    # -----------------------------
+    # HARD SAFETY GUARDS (IMPORTANT)
+    # -----------------------------
+
+    verdict = result.get("verdict", "suspicious")
+
+    if verdict not in ["legit", "suspicious", "phishing"]:
+        verdict = "suspicious"
+
+    score = result.get("score", 50)
+
+    if not isinstance(score, (int, float)):
+        score = 50
 
     return {
         **state,
         "reasoning": result,
-        "verdict": result.get("verdict", "suspicious"),
-        "risk_score": result.get("score", 50)
+        "verdict": verdict,
+        "risk_score": score
     }
