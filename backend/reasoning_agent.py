@@ -1,5 +1,6 @@
 import os
 import json
+
 from openai import OpenAI
 from config import LLM_TEMPERATURE
 
@@ -15,80 +16,53 @@ def reasoning_agent(state):
     virustotal = state.get("virustotal", [])
 
     prompt = f"""
-You are a SENIOR SOC ANALYST in a Security Operations Center.
+You are a SENIOR SOC ANALYST.
 
-Your job is to classify emails using ALL available signals.
+Analyze ALL available evidence.
 
-========================
-EMAIL
-========================
+EMAIL:
 {email}
 
-========================
-IOC DATA
-========================
+IOC DATA:
 {iocs}
 
-========================
-THREAT SIGNALS
-========================
+THREAT SIGNALS:
 {threat}
 
-========================
-MEMORY MATCHES
-========================
+MEMORY PATTERNS:
 {memory}
 
-========================
-VIRUSTOTAL RESULTS
-========================
+VIRUSTOTAL RESULTS:
 {virustotal}
 
-========================
-IMPORTANT RULES (CRITICAL)
-========================
+IMPORTANT:
 
-1. VirusTotal is ONLY a weak signal:
-   - Many phishing URLs are new and NOT detected yet.
-   - Do NOT treat "clean VirusTotal" as safe.
+- Do NOT automatically classify Google Forms as phishing.
+- Do NOT automatically classify Gmail senders as phishing.
+- External Gmail + Google Form alone is usually suspicious.
+- Use VirusTotal reputation when making decisions.
+- If VirusTotal malicious > 0, increase score.
+- If VirusTotal suspicious > 0, increase score.
+- If VirusTotal malicious == 0 and suspicious == 0,
+  treat that as evidence that the URL is not currently
+  known to be malicious.
 
-2. Suspicious classification is VERY IMPORTANT:
-   - If ANY uncertainty exists → prefer "suspicious"
-   - Do NOT overuse "legit"
+RISK SCORE GUIDE:
 
-3. Mark as SUSPICIOUS if ANY of these exist:
-   - External sender (Gmail or non-org domain)
-   - Any form / survey / Google Form link
-   - Any login, verification, HR, payroll, account-related context
-   - Any data collection intent
+0-30 = legit
+31-60 = suspicious
+61-100 = phishing
 
-4. Mark as PHISHING if:
-   - Strong impersonation OR
-   - Fake login pages OR
-   - Clear credential harvesting OR
-   - Known malicious patterns OR
-   - Multiple high-risk signals combined
+TASKS:
 
-5. Mark as LEGIT ONLY IF:
-   - No links
-   - No external sender risk
-   - No request for action
-   - No sensitive context
+1. Determine verdict
+2. Assign score
+3. Extract signals
+4. Generate SOC report bullets
+5. Use all available evidence
 
-6. Decision bias rule:
-   - If unsure between legit vs suspicious → choose SUSPICIOUS
-   - If unsure between suspicious vs phishing → choose SUSPICIOUS
+Return STRICT JSON ONLY:
 
-========================
-RISK SCORE GUIDE
-========================
-0–30 = legit
-31–60 = suspicious
-61–100 = phishing
-
-========================
-OUTPUT FORMAT (STRICT JSON ONLY)
-========================
 {{
   "verdict": "phishing|suspicious|legit",
   "score": 0,
@@ -123,12 +97,15 @@ OUTPUT FORMAT (STRICT JSON ONLY)
 
     try:
         result = json.loads(content)
+
     except Exception:
         result = {
             "verdict": "suspicious",
             "score": 50,
             "signals": ["parse_error"],
-            "soc_report": ["Reasoning output parsing failed."],
+            "soc_report": [
+                "Reasoning output parsing failed."
+            ],
             "confidence": 50
         }
 
