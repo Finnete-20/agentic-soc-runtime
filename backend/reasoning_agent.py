@@ -1,122 +1,140 @@
-from openai import OpenAI
 import os
 import json
+from openai import OpenAI
+from config import LLM_TEMPERATURE
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-def reasoning_agent(state):
-    """
-    SOC ANALYST LLM (GUIDED, NOT RULE-BASED)
 
-    IMPORTANT:
-    - No hardcoded thresholds
-    - No if/else logic
-    - BUT structured signal interpretation is allowed
-    """
+def reasoning_agent(state):
 
     email = state.get("email", "")
     iocs = state.get("iocs", {})
     threat = state.get("threat", {})
-    virustotal = state.get("virustotal", [])
     memory = state.get("memory", {})
-
-    # We do NOT classify — we only provide structured context
-    # This prevents LLM drift while keeping it non-rule-based
-
-    structured_context = {
-        "ioc_signals": iocs.get("features", {}),
-        "threat_signals": threat.get("signals", []),
-        "virustotal_summary": virustotal,
-        "memory_signals": memory.get("pattern_hits", [])
-    }
+    virustotal = state.get("virustotal", [])
 
     prompt = f"""
-You are a senior SOC analyst in a Security Operations Center.
+You are a SENIOR SOC ANALYST in a Security Operations Center.
 
-You must analyze emails and determine risk.
+Your job is to classify emails using ALL available signals.
 
-IMPORTANT RULES:
-- Do NOT use fixed thresholds or if/else logic
-- Do NOT blindly label everything as phishing
-- Use reasoning grounded in signals
-- Balance false positives and false negatives like a real analyst
-
----
-
-EMAIL:
+========================
+EMAIL
+========================
 {email}
 
----
+========================
+IOC DATA
+========================
+{iocs}
 
-STRUCTURED SECURITY SIGNALS:
-{json.dumps(structured_context, indent=2)}
+========================
+THREAT SIGNALS
+========================
+{threat}
 
----
+========================
+MEMORY MATCHES
+========================
+{memory}
 
-TASK:
-1. Analyze all signals holistically
-2. Identify attack intent if present
-3. Consider false positives (e.g., benign university emails, internal systems)
-4. Assign a realistic SOC risk score (0–100)
-5. Choose one:
-   - legit
-   - suspicious
-   - phishing
+========================
+VIRUSTOTAL RESULTS
+========================
+{virustotal}
 
----
+========================
+IMPORTANT RULES (CRITICAL)
+========================
 
-CLASSIFICATION GUIDELINES (NOT RULES):
-- phishing → strong intent + multiple aligned signals
-- suspicious → mixed signals or weak intent
-- legit → no meaningful malicious indicators
+1. VirusTotal is ONLY a weak signal:
+   - Many phishing URLs are new and NOT detected yet.
+   - Do NOT treat "clean VirusTotal" as safe.
 
----
+2. Suspicious classification is VERY IMPORTANT:
+   - If ANY uncertainty exists → prefer "suspicious"
+   - Do NOT overuse "legit"
 
-RETURN STRICT JSON ONLY:
+3. Mark as SUSPICIOUS if ANY of these exist:
+   - External sender (Gmail or non-org domain)
+   - Any form / survey / Google Form link
+   - Any login, verification, HR, payroll, account-related context
+   - Any data collection intent
 
+4. Mark as PHISHING if:
+   - Strong impersonation OR
+   - Fake login pages OR
+   - Clear credential harvesting OR
+   - Known malicious patterns OR
+   - Multiple high-risk signals combined
+
+5. Mark as LEGIT ONLY IF:
+   - No links
+   - No external sender risk
+   - No request for action
+   - No sensitive context
+
+6. Decision bias rule:
+   - If unsure between legit vs suspicious → choose SUSPICIOUS
+   - If unsure between suspicious vs phishing → choose SUSPICIOUS
+
+========================
+RISK SCORE GUIDE
+========================
+0–30 = legit
+31–60 = suspicious
+61–100 = phishing
+
+========================
+OUTPUT FORMAT (STRICT JSON ONLY)
+========================
 {{
-  "verdict": "legit | suspicious | phishing",
-  "risk_score": number,
-  "confidence": number,
-  "signals": ["key contributing factors"],
-  "soc_report": [
-    "SOC reasoning line 1",
-    "SOC reasoning line 2",
-    "SOC reasoning line 3"
-  ]
+  "verdict": "phishing|suspicious|legit",
+  "score": 0,
+  "signals": [],
+  "soc_report": [],
+  "confidence": 0
 }}
 """
 
     response = client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="gpt-4.1-mini",
+        temperature=LLM_TEMPERATURE,
         messages=[
             {
                 "role": "system",
-                "content": "You are an expert SOC analyst. You are careful, balanced, and avoid over-flagging."
+                "content": "You are a senior SOC analyst."
             },
             {
                 "role": "user",
                 "content": prompt
             }
-        ],
-        temperature=0.1
+        ]
     )
 
     content = response.choices[0].message.content.strip()
+
+    content = (
+        content.replace("```json", "")
+        .replace("```", "")
+        .strip()
+    )
 
     try:
         result = json.loads(content)
     except Exception:
         result = {
             "verdict": "suspicious",
-            "risk_score": 50,
-            "confidence": 50,
+            "score": 50,
             "signals": ["parse_error"],
-            "soc_report": [content]
+            "soc_report": ["Reasoning output parsing failed."],
+            "confidence": 50
         }
 
-    state["reasoning"] = result
-    state["verdict"] = result["verdict"]
-    state["risk_score"] = result["risk_score"]
-
-    return state
+    return {
+        **state,
+        "reasoning": result,
+        "verdict": result.get("verdict", "suspicious"),
+        "risk_score": result.get("score", 50)
+    }
