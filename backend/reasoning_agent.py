@@ -1,140 +1,112 @@
+from openai import OpenAI
 import os
 import json
-from openai import OpenAI
-from config import LLM_TEMPERATURE
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-
 def reasoning_agent(state):
+    """
+    PURE LLM-DRIVEN SOC ANALYST
+    No rules. No scoring logic. No thresholds.
+    """
 
     email = state.get("email", "")
     iocs = state.get("iocs", {})
     threat = state.get("threat", {})
-    memory = state.get("memory", {})
     virustotal = state.get("virustotal", [])
+    memory = state.get("memory", {})
 
     prompt = f"""
-You are a SENIOR SOC ANALYST in a Security Operations Center.
+You are a senior SOC analyst working in a Security Operations Center.
 
-Your job is to classify emails using ALL available signals.
+Your job is to analyze emails for phishing risk.
 
-========================
-EMAIL
-========================
+You are NOT allowed to use fixed rules or scoring systems.
+You must reason like a human analyst.
+
+---
+
+EMAIL:
 {email}
 
-========================
-IOC DATA
-========================
-{iocs}
+---
 
-========================
-THREAT SIGNALS
-========================
-{threat}
+IOC EXTRACTION:
+{json.dumps(iocs, indent=2)}
 
-========================
-MEMORY MATCHES
-========================
-{memory}
+---
 
-========================
-VIRUSTOTAL RESULTS
-========================
-{virustotal}
+THREAT ANALYSIS:
+{json.dumps(threat, indent=2)}
 
-========================
-IMPORTANT RULES (CRITICAL)
-========================
+---
 
-1. VirusTotal is ONLY a weak signal:
-   - Many phishing URLs are new and NOT detected yet.
-   - Do NOT treat "clean VirusTotal" as safe.
+VIRUSTOTAL RESULTS:
+{json.dumps(virustotal, indent=2)}
 
-2. Suspicious classification is VERY IMPORTANT:
-   - If ANY uncertainty exists → prefer "suspicious"
-   - Do NOT overuse "legit"
+---
 
-3. Mark as SUSPICIOUS if ANY of these exist:
-   - External sender (Gmail or non-org domain)
-   - Any form / survey / Google Form link
-   - Any login, verification, HR, payroll, account-related context
-   - Any data collection intent
+MEMORY CONTEXT:
+{json.dumps(memory, indent=2)}
 
-4. Mark as PHISHING if:
-   - Strong impersonation OR
-   - Fake login pages OR
-   - Clear credential harvesting OR
-   - Known malicious patterns OR
-   - Multiple high-risk signals combined
+---
 
-5. Mark as LEGIT ONLY IF:
-   - No links
-   - No external sender risk
-   - No request for action
-   - No sensitive context
+INSTRUCTIONS:
+- Decide if the email is: legit, suspicious, or phishing
+- Use reasoning, not rules
+- Consider context, intent, and subtle signals
+- VirusTotal may be misleading (do not blindly trust it)
+- Explain like a SOC analyst writing an incident report
+- Assign a risk score (0–100) based on judgment, not formula
 
-6. Decision bias rule:
-   - If unsure between legit vs suspicious → choose SUSPICIOUS
-   - If unsure between suspicious vs phishing → choose SUSPICIOUS
+---
 
-========================
-RISK SCORE GUIDE
-========================
-0–30 = legit
-31–60 = suspicious
-61–100 = phishing
+RETURN ONLY VALID JSON:
 
-========================
-OUTPUT FORMAT (STRICT JSON ONLY)
-========================
 {{
-  "verdict": "phishing|suspicious|legit",
-  "score": 0,
-  "signals": [],
-  "soc_report": [],
-  "confidence": 0
+  "verdict": "legit | suspicious | phishing",
+  "risk_score": number,
+  "confidence": number,
+  "signals": ["list of key indicators you used"],
+  "soc_report": [
+    "SOC-style explanation line 1",
+    "SOC-style explanation line 2",
+    "SOC-style explanation line 3"
+  ]
 }}
 """
 
     response = client.chat.completions.create(
-        model="gpt-4.1-mini",
-        temperature=LLM_TEMPERATURE,
+        model="gpt-4o-mini",
         messages=[
             {
                 "role": "system",
-                "content": "You are a senior SOC analyst."
+                "content": "You are a highly experienced SOC analyst specializing in phishing detection."
             },
             {
                 "role": "user",
                 "content": prompt
             }
-        ]
+        ],
+        temperature=0.2
     )
 
     content = response.choices[0].message.content.strip()
 
-    content = (
-        content.replace("```json", "")
-        .replace("```", "")
-        .strip()
-    )
-
     try:
         result = json.loads(content)
     except Exception:
+        # fallback safe parse (DO NOT use rules, just fail gracefully)
         result = {
             "verdict": "suspicious",
-            "score": 50,
-            "signals": ["parse_error"],
-            "soc_report": ["Reasoning output parsing failed."],
-            "confidence": 50
+            "risk_score": 50,
+            "confidence": 50,
+            "signals": ["llm_parse_error"],
+            "soc_report": [content]
         }
 
-    return {
-        **state,
-        "reasoning": result,
-        "verdict": result.get("verdict", "suspicious"),
-        "risk_score": result.get("score", 50)
-    }
+    state["reasoning"] = result
+    state["verdict"] = result["verdict"]
+    state["risk_score"] = result["risk_score"]
+
+    return state
