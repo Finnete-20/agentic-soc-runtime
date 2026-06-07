@@ -101,6 +101,13 @@ Risk score model:
 - 31–60 → Suspicious
 - 61–100 → Phishing
 
+For evaluation purposes, suspicious and phishing verdicts are grouped into a single malicious class.
+
+Evaluation Labels:
+
+- 0 → Legitimate
+- 1 → Phishing / Malicious
+
 The engine aggregates:
 
 - IOC signals
@@ -127,10 +134,11 @@ Features:
 
 Dataset includes:
 
-- Phishing emails
-- Legitimate emails
-- Edge-case ambiguous emails
-- Real-world phishing simulation samples
+- Confirmed phishing emails
+- Legitimate business emails
+- Security awareness simulations
+- Edge-case benign emails containing links
+- Google Forms and data-harvesting scenarios
 
 ---
 

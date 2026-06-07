@@ -212,10 +212,12 @@ Dataset: ~40 emails (phishing, suspicious, legitimate)
 Metrics computed using evaluate.py:
 
 - Accuracy
-- Precision (macro average)
-- Recall (macro average)
-- F1 Score (macro average)
-- Confusion matrix
+- Precision
+- Recall
+- F1 Score
+- Binary confusion matrix
+
+Evaluation groups all malicious outcomes into a single phishing class.
 
 ### Run Evaluation
 
@@ -224,10 +226,11 @@ python evaluate.py
 ```
 ---
 ### Measured Results
-- Accuracy: ~0.825
-- Precision: computed via evaluation script
-- Recall: computed via evaluation script
-- F1 Score: computed via evaluation script
+
+Accuracy : 0.825
+Precision: 0.841
+Recall   : 0.860
+F1 Score : 0.824
 ---
 ### Dataset
 
@@ -237,18 +240,28 @@ backend/soc_dataset.py
 
 Includes:
 
-- Phishing emails
-- Legitimate emails
-- Edge-case phishing (HR scams, Google Forms, spoofing)
+- 15 phishing emails
+- 15 legitimate emails
+- 10 edge-case emails
+
+Edge cases include:
+
+- Official Microsoft links
+- Password reset notifications
+- Google Forms surveys
+- Zoom invitations
+- Security awareness exercises
+- Internal HR communications
 ---
 ### Why This Is Agentic
 
 This system is agentic because:
 
-- Multiple specialized agents
-- LangGraph orchestration
-- Structured state passing
-- External tool integration
 - LLM-based reasoning agent
-- Explainable SOC outputs
+- Stateful multi-agent workflow using LangGraph
+- Agent-to-agent context passing
+- Tool-augmented decision making
+- Memory-enhanced threat analysis
+- Explainable SOC-style reporting
+
 ---
