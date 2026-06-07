@@ -14,10 +14,14 @@ def reasoning_agent(state):
     memory = state.get("memory", {})
     virustotal = state.get("virustotal", [])
 
+    # SAFE prompt (no nested JSON formatting issues)
     prompt = f"""
 You are a SENIOR SOC ANALYST in a Security Operations Center.
 
-Your job is to classify emails using reasoning over signals.
+Your task is to classify emails into exactly ONE of:
+- legit
+- suspicious
+- phishing
 
 ========================
 EMAIL
@@ -25,7 +29,7 @@ EMAIL
 {email}
 
 ========================
-IOC DATA
+IOC SIGNALS
 ========================
 {iocs}
 
@@ -35,127 +39,86 @@ THREAT SIGNALS
 {threat}
 
 ========================
-MEMORY MATCHES
+MEMORY SIGNALS
 ========================
 {memory}
 
 ========================
-VIRUSTOTAL RESULTS
+VIRUSTOTAL
 ========================
 {virustotal}
 
 ========================
-CRITICAL SOC CLASSIFICATION RULES
+CLASSIFICATION RULES
 ========================
 
-PHISHING:
-- login / password reset / account verification / Microsoft / Google / Zoom / DocuSign / bank / HR / payroll requests
-- urgency + link
-- impersonation
-- credential or identity requests
+1. If email is internal university/system message with NO external link → legit
 
-SUSPICIOUS:
-- external sender + link OR form OR request for action
-- Google Forms or surveys
-- mass email or unclear intent
+2. If email has ANY external link OR external sender → at least suspicious
 
-LEGIT:
-- internal communication only
-- no links
-- no actions required
+3. If phishing indicators exist (login page, credential request, fake Microsoft, HR/payroll, urgency) → phishing
 
-IMPORTANT BIAS RULE:
-- If link + action → NEVER legit
-- If unsure between suspicious and phishing → choose phishing
-- Do NOT overuse suspicious
+4. Google Forms / surveys / data collection → suspicious
 
-VirusTotal is weak signal only.
+5. VirusTotal is weak signal (never trust alone)
 
-========================
-RISK SCORE GUIDE
-========================
-0–30 = legit
-31–60 = suspicious
-61–100 = phishing
+6. NEVER output "benign" (invalid label)
+
+7. If uncertain:
+   suspicious > legit
 
 ========================
 OUTPUT FORMAT (STRICT JSON ONLY)
 ========================
-
-Return ONLY valid JSON. No markdown, no explanation.
-
-Example:
 {{
-  "verdict": "phishing",
-  "score": 85,
-  "signals": ["external_sender", "login_link"],
-  "soc_report": ["reason 1", "reason 2"],
-  "confidence": 90
+  "verdict": "legit | suspicious | phishing",
+  "score": 0,
+  "signals": [],
+  "soc_report": [],
+  "confidence": 0
 }}
 """
 
-    response = client.chat.completions.create(
-        model="gpt-4.1-mini",
-        temperature=LLM_TEMPERATURE,
-        messages=[
-            {
-                "role": "system",
-                "content": "You are a senior SOC analyst specializing in phishing detection."
-            },
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ]
-    )
-
-    content = response.choices[0].message.content.strip()
-
-    # clean markdown if model adds it
-    content = content.replace("```json", "").replace("```", "").strip()
-
     try:
+        response = client.chat.completions.create(
+            model="gpt-4.1-mini",
+            temperature=LLM_TEMPERATURE,
+            messages=[
+                {"role": "system", "content": "You are a senior SOC analyst."},
+                {"role": "user", "content": prompt}
+            ]
+        )
+
+        content = response.choices[0].message.content.strip()
+
+        # clean markdown wrappers
+        content = content.replace("```json", "").replace("```", "").strip()
+
         result = json.loads(content)
 
-    except Exception as e:
-        return {
-            **state,
-            "reasoning": {
-                "verdict": "suspicious",
-                "score": 55,
-                "signals": ["parse_error"],
-                "soc_report": [str(e)],
-                "confidence": 60
-            },
+    except Exception:
+        result = {
             "verdict": "suspicious",
-            "risk_score": 55
+            "score": 50,
+            "signals": ["parse_error"],
+            "soc_report": ["LLM parsing failed or invalid response"],
+            "confidence": 50
         }
 
+    # ✅ NORMALIZE LABELS (CRITICAL FIX)
+    label_map = {
+        "benign": "legit",
+        "legit": "legit",
+        "suspicious": "suspicious",
+        "phishing": "phishing"
+    }
+
     verdict = result.get("verdict", "suspicious")
-    score = result.get("score", 50)
-
-    # =========================
-    # SAFETY + CONSISTENCY FIX
-    # =========================
-    email_lower = email.lower()
-
-    # force phishing for obvious attack patterns
-    if any(k in email_lower for k in ["login", "verify", "reset", "password", "account"]):
-        if verdict != "phishing":
-            verdict = "phishing"
-            score = max(score, 80)
-
-    # normalize scoring consistency
-    if verdict == "phishing" and score < 60:
-        score = 85
-    elif verdict == "suspicious" and score > 80:
-        score = 65
-    elif verdict == "legit" and score > 40:
-        score = 25
+    result["verdict"] = label_map.get(verdict, "suspicious")
 
     return {
         **state,
         "reasoning": result,
-        "verdict": verdict,
-        "risk_score": score
+        "verdict": result["verdict"],
+        "risk_score": result.get("score", 50)
     }
