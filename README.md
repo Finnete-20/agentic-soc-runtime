@@ -12,11 +12,11 @@ The goal is explainability, structured decision-making, and SOC-style reasoning 
 
 ## Key Features
 
-### Multi-Agent SOC Pipeline
+## Multi-Agent SOC Pipeline
 
 The system uses a structured SOC-style workflow that simulates real security analyst reasoning.
 
-The pipeline is decomposed into five specialized agents:
+The pipeline is decomposed into specialized agents:
 
 ---
 
@@ -25,7 +25,6 @@ The pipeline is decomposed into five specialized agents:
 Extracts security-relevant artifacts from email content.
 
 It identifies:
-
 - Email addresses
 - URLs
 - Domains
@@ -41,100 +40,87 @@ Build structured intelligence from raw email input.
 Evaluates extracted indicators and assigns initial threat signals.
 
 It analyzes:
-
-- Impersonation attempts (fake organizations or domains)
+- Impersonation attempts
 - Social engineering patterns
-- Urgency manipulation ("act now", "limited time")
+- Urgency manipulation
 - External email domains
-- Data harvesting indicators (Google Forms, surveys)
+- Data harvesting indicators
 
 Purpose:
 Model attacker intent and behavioral patterns.
 
 ---
 
-### 3. VirusTotal Agent (Threat Intelligence Layer)
+### 3. VirusTotal Agent
 
-Performs real-time URL reputation analysis using the VirusTotal API.
+Performs real-time URL reputation analysis using VirusTotal API.
 
 It provides:
-
 - Malicious score
 - Suspicious score
 - Harmless score
 - Undetected classification
 
 Purpose:
-Validate extracted URLs using external threat intelligence sources.
+Validate extracted URLs using external threat intelligence.
 
 ---
 
 ### 4. Memory Agent
 
-Maintains lightweight historical context of known attack patterns.
+Maintains historical context of known attack patterns.
 
 It can match:
-
 - Previously seen phishing patterns
 - Repeated scam structures
-- Known malicious domains and behaviors
+- Known malicious domains
 
 Purpose:
-Improve detection consistency across repeated attack styles.
+Improve detection consistency.
 
 ---
 
-### 5. Reasoning Agent (LLM-Powered SOC Analyst)
+### 5. Reasoning Agent (LLM SOC Analyst)
 
-Aggregates signals from all previous agents and computes final classification.
+Aggregates all signals and produces final classification.
 
-This node uses an LLM (GPT-4.1-mini) to interpret:
-
+Uses GPT-4.1-mini to analyze:
 - IOC signals
-- Threat intelligence results
-- VirusTotal API outputs
+- Threat intelligence
+- VirusTotal results
 - Memory matches
 
-It produces:
-
+Outputs:
+- Final verdict (legit / suspicious / phishing)
 - Risk score (0–100)
-- Final classification (legit / suspicious / phishing)
-- Structured SOC reasoning
+- Extracted indicators (IOCs)
+- SOC-style reasoning explanation
 
 Purpose:
-Act as an AI SOC analyst replacing rule-based classification.
+Replaces rule-based classification with LLM reasoning.
 
 ---
 
-### 6. Reporting Agent
+### 6. Reporting Layer
 
-Generates final SOC-style structured output.
+Generates final SOC-style output.
 
-It returns:
-
-- Final verdict
+Outputs:
+- Verdict
 - Risk score
-- Extracted indicators
-- SOC explanation summary
-
-Purpose:
-Provide explainable security output for analysts.
+- Indicators
+- SOC explanation
 
 ---
 
 ## Tool-Based Architecture
 
-A modular tool layer is used for threat intelligence enrichment.
-
 Capabilities:
-
 - URL reputation checking
-- Real VirusTotal API integration
-- Tool abstraction layer
-- Extensible SOC intelligence design
+- VirusTotal API integration
+- Modular tool system
 
-Future integrations:
-
+Future:
 - AbuseIPDB
 - URLScan.io
 - OpenCTI
@@ -143,18 +129,13 @@ Future integrations:
 
 ## Memory System
 
-The system maintains historical security context:
-
-- Stores known phishing patterns
-- Detects repeated attack structures
+- Stores phishing patterns
+- Detects repeated attacks
 - Improves contextual reasoning
-- Enhances consistency in risk scoring
 
 ---
 
 ## Risk Scoring
-
-Risk score range: 0–100
 
 - 0–30 → Legitimate
 - 31–60 → Suspicious
@@ -162,9 +143,7 @@ Risk score range: 0–100
 
 ---
 
-## Architecture
-
-### System Flow
+## Architecture Flow
 
 ```text
 Email Input
@@ -179,13 +158,14 @@ Memory Agent
     ↓
 Reasoning Agent (LLM)
     ↓
-Reporting Agent
+Reporting Layer
     ↓
-Final Classification Output
+Final Output
 ```
 ---
 ### LangGraph Workflow
 
+```python
 workflow = StateGraph(AgentState)
 
 workflow.add_node("ioc", extract_iocs)
@@ -204,13 +184,14 @@ workflow.add_edge("memory", "reasoning")
 workflow.add_edge("reasoning", "report")
 
 app = workflow.compile()
+```
 ---
 ### Tech Stack
 - Python
 - FastAPI
 - LangGraph
-- OpenAI GPT-4.1-mini (LLM reasoning layer)
-- VirusTotal API (real-time threat intelligence)
+- OpenAI GPT-4.1-mini
+- VirusTotal API
 - React
 - TailwindCSS
 ---
@@ -218,7 +199,7 @@ app = workflow.compile()
 - Backend
 cd backend
 pip install -r requirements.txt
-uvicorn main:api --reload
+uvicorn main:app --reload
 - Frontend
 cd frontend
 npm install
@@ -226,16 +207,27 @@ npm run dev
 ---
 ### Evaluation
 
-Run evaluation pipeline:
+Dataset: ~40 emails (phishing, suspicious, legitimate)
 
+Metrics computed using evaluate.py:
+
+- Accuracy
+- Precision (macro average)
+- Recall (macro average)
+- F1 Score (macro average)
+- Confusion matrix
+
+### Run Evaluation
+
+```bash
 python evaluate.py
-
-- Outputs:
-
-evaluation_result.json
-evaluation_report.json
-SOC metrics (accuracy, precision, recall)
-Confusion matrix
+```
+---
+### Measured Results
+- Accuracy: ~0.825
+- Precision: computed via evaluation script
+- Recall: computed via evaluation script
+- F1 Score: computed via evaluation script
 ---
 ### Dataset
 
@@ -245,20 +237,18 @@ backend/soc_dataset.py
 
 Includes:
 
-Phishing emails
-Legitimate emails
-Edge-case phishing (Google Forms, spoofing, HR scams)
-
-Total samples: ~40
+- Phishing emails
+- Legitimate emails
+- Edge-case phishing (HR scams, Google Forms, spoofing)
 ---
+### Why This Is Agentic
 
-### Purpose
+This system is agentic because:
 
-This system demonstrates:
-
-- Multi-agent SOC reasoning (LangGraph workflow execution)
-- LLM-assisted security decision-making
-- Real-time threat intelligence integration (VirusTotal API)
-- Memory-enhanced detection system
-- Explainable phishing detection
-- Evaluation-driven AI security system
+- Multiple specialized agents
+- LangGraph orchestration
+- Structured state passing
+- External tool integration
+- LLM-based reasoning agent
+- Explainable SOC outputs
+---

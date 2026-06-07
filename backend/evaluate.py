@@ -10,35 +10,18 @@ from runtime_graph import app as agent_app
 from soc_dataset import SOC_DATASET
 
 
-# -----------------------------
-# SOC-STYLE LABEL MAPPING
-# -----------------------------
-
 def normalize_label(label):
-    """
-    Dataset label conversion:
-    0 = legit
-    1 = suspicious
-    2 = phishing
-    """
-
     if label == 0 or label == "legit":
         return 0
     elif label == 1 or label == "suspicious":
         return 1
     elif label == 2 or label == "phishing":
         return 2
-
     return 0
 
 
 def normalize_pred(pred):
-    """
-    Model output normalization
-    """
-
     pred = str(pred).lower()
-
     if "phishing" in pred:
         return 2
     elif "suspicious" in pred:
@@ -46,10 +29,6 @@ def normalize_pred(pred):
     else:
         return 0
 
-
-# -----------------------------
-# EVALUATION
-# -----------------------------
 
 def evaluate(dataset):
 
@@ -82,14 +61,12 @@ def evaluate(dataset):
         print("==============================")
 
     # -----------------------------
-    # CONFUSION MATRIX (3-class)
+    # CONFUSION MATRIX
     # -----------------------------
 
-    labels = [0, 1, 2]  # legit, suspicious, phishing
+    labels = [0, 1, 2]
 
-    matrix = {
-        (i, j): 0 for i in labels for j in labels
-    }
+    matrix = {(i, j): 0 for i in labels for j in labels}
 
     for t, p in zip(y_true, y_pred):
         matrix[(t, p)] += 1
@@ -97,8 +74,6 @@ def evaluate(dataset):
     print("\n==============================")
     print("CONFUSION MATRIX")
     print("==============================")
-
-    print("Rows = TRUE | Cols = PREDICTED")
     print("0 = legit | 1 = suspicious | 2 = phishing\n")
 
     for i in labels:
@@ -106,22 +81,39 @@ def evaluate(dataset):
         print(f"{i}: {row}")
 
     # -----------------------------
-    # ACCURACY
+    # METRICS
     # -----------------------------
 
     correct = sum(1 for t, p in zip(y_true, y_pred) if t == p)
     accuracy = correct / len(y_true)
 
+    precisions = []
+    recalls = []
+    f1s = []
+
+    for c in labels:
+
+        tp = matrix[(c, c)]
+        fp = sum(matrix[(o, c)] for o in labels if o != c)
+        fn = sum(matrix[(c, o)] for o in labels if o != c)
+
+        precision = tp / (tp + fp) if (tp + fp) else 0
+        recall = tp / (tp + fn) if (tp + fn) else 0
+        f1 = (2 * precision * recall / (precision + recall)) if (precision + recall) else 0
+
+        precisions.append(precision)
+        recalls.append(recall)
+        f1s.append(f1)
+
     print("\n==============================")
     print("FINAL RESULTS")
     print("==============================")
 
-    print("Accuracy:", round(accuracy, 3))
+    print(f"Accuracy : {accuracy:.3f}")
+    print(f"Precision: {sum(precisions)/3:.3f}")
+    print(f"Recall   : {sum(recalls)/3:.3f}")
+    print(f"F1 Score : {sum(f1s)/3:.3f}")
 
-
-# -----------------------------
-# RUN
-# -----------------------------
 
 if __name__ == "__main__":
     evaluate(SOC_DATASET)
