@@ -15,12 +15,9 @@ def reasoning_agent(state):
     virustotal = state.get("virustotal", [])
 
     prompt = f"""
-You are an autonomous SOC reasoning engine inside a cybersecurity system.
+You are a SENIOR SOC ANALYST in a Security Operations Center.
 
-You are NOT rule-based.
-You are a decision-making SOC analyst.
-
-Your job is to analyze all signals and produce a final classification.
+Your job is to classify emails using reasoning over signals.
 
 ========================
 EMAIL
@@ -48,36 +45,52 @@ VIRUSTOTAL RESULTS
 {virustotal}
 
 ========================
-INSTRUCTIONS
+CRITICAL SOC CLASSIFICATION RULES
 ========================
 
-- Analyze all signals together (do NOT use hardcoded rules)
-- VirusTotal is only weak supporting evidence
-- External sender or Google Forms may increase risk but are not decisive alone
-- Think like a SOC analyst reviewing a real incident
+PHISHING:
+- login / password reset / account verification / Microsoft / Google / Zoom / DocuSign / bank / HR / payroll requests
+- urgency + link
+- impersonation
+- credential or identity requests
 
-Classify into EXACTLY ONE:
+SUSPICIOUS:
+- external sender + link OR form OR request for action
+- Google Forms or surveys
+- mass email or unclear intent
 
-- legit
-- suspicious
-- phishing
+LEGIT:
+- internal communication only
+- no links
+- no actions required
 
-IMPORTANT:
-- verdict MUST be exactly one of: legit, suspicious, phishing
-- NEVER return "error", "unknown", or null
+IMPORTANT BIAS RULE:
+- If link + action → NEVER legit
+- If unsure between suspicious and phishing → choose phishing
+- Do NOT overuse suspicious
+
+VirusTotal is weak signal only.
+
+========================
+RISK SCORE GUIDE
+========================
+0–30 = legit
+31–60 = suspicious
+61–100 = phishing
 
 ========================
 OUTPUT FORMAT (STRICT JSON ONLY)
 ========================
 
-Return ONLY valid JSON:
+Return ONLY valid JSON. No markdown, no explanation.
 
+Example:
 {{
-  "verdict": "legit | suspicious | phishing",
-  "score": 0,
-  "signals": [],
-  "soc_report": [],
-  "confidence": 0
+  "verdict": "phishing",
+  "score": 85,
+  "signals": ["external_sender", "login_link"],
+  "soc_report": ["reason 1", "reason 2"],
+  "confidence": 90
 }}
 """
 
@@ -87,7 +100,7 @@ Return ONLY valid JSON:
         messages=[
             {
                 "role": "system",
-                "content": "You are a senior SOC analyst making final classification decisions."
+                "content": "You are a senior SOC analyst specializing in phishing detection."
             },
             {
                 "role": "user",
@@ -98,38 +111,47 @@ Return ONLY valid JSON:
 
     content = response.choices[0].message.content.strip()
 
-    # Clean markdown fences if any
-    content = (
-        content.replace("```json", "")
-        .replace("```", "")
-        .strip()
-    )
+    # clean markdown if model adds it
+    content = content.replace("```json", "").replace("```", "").strip()
 
     try:
         result = json.loads(content)
-    except Exception:
-        # SAFE FALLBACK (prevents system crash)
-        result = {
+
+    except Exception as e:
+        return {
+            **state,
+            "reasoning": {
+                "verdict": "suspicious",
+                "score": 55,
+                "signals": ["parse_error"],
+                "soc_report": [str(e)],
+                "confidence": 60
+            },
             "verdict": "suspicious",
-            "score": 50,
-            "signals": ["parse_error"],
-            "soc_report": ["LLM output parsing failed; defaulting to suspicious."],
-            "confidence": 50
+            "risk_score": 55
         }
 
-    # -----------------------------
-    # HARD SAFETY GUARDS (IMPORTANT)
-    # -----------------------------
-
     verdict = result.get("verdict", "suspicious")
-
-    if verdict not in ["legit", "suspicious", "phishing"]:
-        verdict = "suspicious"
-
     score = result.get("score", 50)
 
-    if not isinstance(score, (int, float)):
-        score = 50
+    # =========================
+    # SAFETY + CONSISTENCY FIX
+    # =========================
+    email_lower = email.lower()
+
+    # force phishing for obvious attack patterns
+    if any(k in email_lower for k in ["login", "verify", "reset", "password", "account"]):
+        if verdict != "phishing":
+            verdict = "phishing"
+            score = max(score, 80)
+
+    # normalize scoring consistency
+    if verdict == "phishing" and score < 60:
+        score = 85
+    elif verdict == "suspicious" and score > 80:
+        score = 65
+    elif verdict == "legit" and score > 40:
+        score = 25
 
     return {
         **state,
