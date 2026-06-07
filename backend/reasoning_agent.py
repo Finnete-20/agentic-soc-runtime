@@ -1,6 +1,5 @@
 import os
 import json
-
 from openai import OpenAI
 from config import LLM_TEMPERATURE
 
@@ -16,60 +15,72 @@ def reasoning_agent(state):
     virustotal = state.get("virustotal", [])
 
     prompt = f"""
-You are a SENIOR SOC ANALYST.
+You are an autonomous SOC reasoning engine inside a cybersecurity system.
 
-Analyze ALL available evidence.
+You are NOT a rule-based classifier.
+You are a decision-making SOC analyst.
 
-EMAIL:
+Your job is to analyze all signals and make a final judgment.
+
+========================
+EMAIL
+========================
 {email}
 
-IOC DATA:
+========================
+IOC DATA
+========================
 {iocs}
 
-THREAT SIGNALS:
+========================
+THREAT SIGNALS
+========================
 {threat}
 
-MEMORY PATTERNS:
+========================
+MEMORY MATCHES
+========================
 {memory}
 
-VIRUSTOTAL RESULTS:
+========================
+VIRUSTOTAL RESULTS
+========================
 {virustotal}
 
-IMPORTANT:
+========================
+INSTRUCTIONS
+========================
 
-- Do NOT automatically classify Google Forms as phishing.
-- Do NOT automatically classify Gmail senders as phishing.
-- External Gmail + Google Form alone is usually suspicious.
-- Use VirusTotal reputation when making decisions.
-- If VirusTotal malicious > 0, increase score.
-- If VirusTotal suspicious > 0, increase score.
-- If VirusTotal malicious == 0 and suspicious == 0,
-  treat that as evidence that the URL is not currently
-  known to be malicious.
+You must:
+- Analyze all signals holistically
+- Detect phishing patterns, social engineering, and suspicious intent
+- Avoid relying on any single signal (including VirusTotal)
+- Reason like a human SOC analyst
 
-RISK SCORE GUIDE:
+Guidance:
+- VirusTotal is only supporting evidence, not ground truth
+- External sender may increase risk but is not decisive alone
+- Google Forms / surveys can be legitimate OR malicious depending on context
+- Do NOT use fixed thresholds or hardcoded rules
 
-0-30 = legit
-31-60 = suspicious
-61-100 = phishing
+Classify the email as one of:
+- "legit"
+- "suspicious"
+- "phishing"
 
-TASKS:
+========================
+OUTPUT FORMAT (STRICT JSON ONLY)
+========================
 
-1. Determine verdict
-2. Assign score
-3. Extract signals
-4. Generate SOC report bullets
-5. Use all available evidence
+Return ONLY valid JSON:
 
-Return STRICT JSON ONLY:
-
-{{
-  "verdict": "phishing|suspicious|legit",
+{
+  "verdict": "legit | suspicious | phishing",
   "score": 0,
   "signals": [],
   "soc_report": [],
   "confidence": 0
-}}
+}
 """
 
     response = client.chat.completions.create(
@@ -78,7 +89,7 @@ Return STRICT JSON ONLY:
         messages=[
             {
                 "role": "system",
-                "content": "You are a senior SOC analyst."
+                "content": "You are a senior SOC analyst making final classification decisions."
             },
             {
                 "role": "user",
@@ -89,6 +100,7 @@ Return STRICT JSON ONLY:
 
     content = response.choices[0].message.content.strip()
 
+    # clean markdown if model adds it
     content = (
         content.replace("```json", "")
         .replace("```", "")
@@ -97,15 +109,12 @@ Return STRICT JSON ONLY:
 
     try:
         result = json.loads(content)
-
     except Exception:
         result = {
             "verdict": "suspicious",
             "score": 50,
             "signals": ["parse_error"],
-            "soc_report": [
-                "Reasoning output parsing failed."
-            ],
+            "soc_report": ["LLM output parsing failed"],
             "confidence": 50
         }
 
