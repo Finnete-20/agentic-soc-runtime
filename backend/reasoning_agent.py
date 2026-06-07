@@ -1,5 +1,6 @@
 import os
 import json
+
 from openai import OpenAI
 from config import LLM_TEMPERATURE
 
@@ -15,75 +16,55 @@ def reasoning_agent(state):
     virustotal = state.get("virustotal", [])
 
     prompt = f"""
-You are a SENIOR SOC ANALYST working in a Security Operations Center.
+You are a SENIOR SOC ANALYST.
 
-Your job is to classify emails into EXACTLY ONE of:
-- legit
-- suspicious
-- phishing
-
-You must be STRICT and CONSISTENT.
-
-========================
-CLASSIFICATION RULES
-========================
-
-🚨 PHISHING (score 61–100):
-- Credential theft (password reset, login pages, account locked)
-- Fake Microsoft, Google, bank, Zoom, HR impersonation
-- ANY urgency + link asking to verify identity
-- ANY login/verification link that is not official domain
-
-⚠️ SUSPICIOUS (31–60):
-- External Gmail sender + link present
-- Google Forms or surveys requesting data
-- Urgent tone but no direct credential theft
-- Unknown link with no VirusTotal evidence
-
-✅ LEGIT (0–30):
-- Internal communication
-- No external links
-- No urgency
-- No credential requests
-
-========================
-IMPORTANT OVERRIDES
-========================
-
-- VirusTotal is a STRONG SIGNAL:
-  - malicious > 0 → increase likelihood of phishing
-  - suspicious > 0 → increase likelihood of phishing/suspicious
-  - harmless high AND undetected → NOT enough to mark phishing alone
-
-- DO NOT automatically treat Google Forms as phishing
-- DO NOT automatically treat Gmail sender as phishing
-- BUT combination of Gmail + form + data harvesting = suspicious
-
-========================
-DATA
-========================
+Analyze ALL available evidence.
 
 EMAIL:
 {email}
 
-IOC:
+IOC DATA:
 {iocs}
 
-THREAT:
+THREAT SIGNALS:
 {threat}
 
-MEMORY:
+MEMORY PATTERNS:
 {memory}
 
-VIRUSTOTAL:
+VIRUSTOTAL RESULTS:
 {virustotal}
 
-========================
-OUTPUT FORMAT (STRICT JSON ONLY)
-========================
+IMPORTANT:
+
+- Do NOT automatically classify Google Forms as phishing.
+- Do NOT automatically classify Gmail senders as phishing.
+- External Gmail + Google Form alone is usually suspicious.
+- Use VirusTotal reputation when making decisions.
+- If VirusTotal malicious > 0, increase score.
+- If VirusTotal suspicious > 0, increase score.
+- If VirusTotal malicious == 0 and suspicious == 0,
+  treat that as evidence that the URL is not currently
+  known to be malicious.
+
+RISK SCORE GUIDE:
+
+0-30 = legit
+31-60 = suspicious
+61-100 = phishing
+
+TASKS:
+
+1. Determine verdict
+2. Assign score
+3. Extract signals
+4. Generate SOC report bullets
+5. Use all available evidence
+
+Return STRICT JSON ONLY:
 
 {{
-  "verdict": "legit|suspicious|phishing",
+  "verdict": "phishing|suspicious|legit",
   "score": 0,
   "signals": [],
   "soc_report": [],
@@ -97,7 +78,7 @@ OUTPUT FORMAT (STRICT JSON ONLY)
         messages=[
             {
                 "role": "system",
-                "content": "You are a strict SOC analyst. You MUST follow classification rules exactly."
+                "content": "You are a senior SOC analyst."
             },
             {
                 "role": "user",
@@ -108,7 +89,6 @@ OUTPUT FORMAT (STRICT JSON ONLY)
 
     content = response.choices[0].message.content.strip()
 
-    # clean markdown if model adds it
     content = (
         content.replace("```json", "")
         .replace("```", "")
@@ -123,7 +103,9 @@ OUTPUT FORMAT (STRICT JSON ONLY)
             "verdict": "suspicious",
             "score": 50,
             "signals": ["parse_error"],
-            "soc_report": ["Failed to parse LLM output"],
+            "soc_report": [
+                "Reasoning output parsing failed."
+            ],
             "confidence": 50
         }
 
