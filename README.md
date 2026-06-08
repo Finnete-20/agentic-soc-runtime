@@ -1,169 +1,145 @@
-# Agentic SOC Phishing Detection System
+# Agentic SOC Phishing Detection System  
+## Multi-Agent Email Threat Analyzer
+
+---
 
 ## Overview
 
-The Agentic SOC Phishing Detection System is an AI-powered Security Operations Center (SOC) assistant designed to detect phishing emails using a multi-agent architecture.
+The Agentic SOC Phishing Detection System is an AI-powered Security Operations Center (SOC) simulation that detects phishing emails using a multi-agent architecture, external threat intelligence tools, and an LLM-based reasoning engine.
 
-The system simulates real SOC investigation workflows using LangGraph, LLM-driven reasoning, real-time threat intelligence (VirusTotal API), memory-based reasoning, and structured reporting.
-
-The goal is explainability, structured decision-making, and SOC-style reasoning rather than only classification accuracy.
+The system is designed to replicate real-world SOC workflows by decomposing email analysis into structured investigative steps and producing explainable security decisions.
 
 ---
 
-## Key Features
+## System Objective
 
-## Multi-Agent SOC Pipeline
+The system aims to:
 
-The system uses a structured SOC-style workflow that simulates real security analyst reasoning.
-
-The pipeline is decomposed into specialized agents:
+- Detect phishing and malicious emails using structured multi-agent reasoning
+- Simulate SOC analyst workflows using LangGraph orchestration
+- Extract and analyze security indicators (IOCs) from raw email data
+- Use external threat intelligence (VirusTotal API) for validation
+- Maintain memory of known attack patterns
+- Use an LLM-based reasoning engine for final classification
+- Provide explainable SOC-style reports
 
 ---
 
-### 1. IOC Agent
+## Agentic Definition
 
-Extracts security-relevant artifacts from email content.
+This system is agentic because it delegates decision-making to an LLM-based reasoning agent that synthesizes outputs from multiple specialized agents and external tools to produce final security classifications.
 
-It identifies:
-- Email addresses
+The system does not rely on static rules; instead, it uses structured multi-step reasoning over tool outputs and contextual signals.
+
+---
+
+## System Architecture
+
+The system is built using a modular multi-agent pipeline orchestrated by LangGraph.
+
+### Execution Flow
+
+ioc → threat → virustotal → memory → reasoning → report
+
+---
+
+## Agent Components
+
+### 1. IOC Extraction Agent
+Extracts Indicators of Compromise (IOCs) from raw email content.
+
 - URLs
+- Email addresses
 - Domains
-- Basic suspicious indicators
-
-Purpose:
-Build structured intelligence from raw email input.
+- Suspicious patterns
 
 ---
 
-### 2. Threat Agent
+### 2. Threat Analysis Agent
+Analyzes extracted IOCs for phishing indicators.
 
-Evaluates extracted indicators and assigns initial threat signals.
+Detects:
 
-It analyzes:
 - Impersonation attempts
-- Social engineering patterns
 - Urgency manipulation
-- External email domains
-- Data harvesting indicators
-
-Purpose:
-Model attacker intent and behavioral patterns.
+- Social engineering patterns
+- External email domain usage
+- Data harvesting behavior
 
 ---
 
-### 3. VirusTotal Agent
+### 3. VirusTotal Intelligence Agent
+Performs real-time URL reputation analysis using the VirusTotal API.
 
-Performs real-time URL reputation analysis using VirusTotal API.
+Provides:
 
-It provides:
 - Malicious score
 - Suspicious score
 - Harmless score
 - Undetected classification
 
-Purpose:
-Validate extracted URLs using external threat intelligence.
+This external intelligence is used as part of the reasoning context.
 
 ---
 
 ### 4. Memory Agent
+Stores and retrieves historical attack patterns.
 
-Maintains historical context of known attack patterns.
+Capabilities:
 
-It can match:
-- Previously seen phishing patterns
-- Repeated scam structures
-- Known malicious domains
-
-Purpose:
-Improve detection consistency.
+- Detect repeated phishing structures
+- Track known malicious domains
+- Improve contextual detection accuracy
 
 ---
 
-### 5. Reasoning Agent (LLM SOC Analyst)
+### 5. LLM-Based Reasoning Agent (Core Engine)
 
-Aggregates all signals and produces final classification.
+The reasoning agent uses GPT-4.1-mini as the primary decision-making component.
 
-Uses GPT-4.1-mini to analyze:
+It analyzes:
+
 - IOC signals
-- Threat intelligence
-- VirusTotal results
-- Memory matches
+- Threat analysis results
+- VirusTotal intelligence
+- Memory-based patterns
 
-Outputs:
-- Final verdict (legit / suspicious / phishing)
+It outputs:
+
+- Final classification: (legit / suspicious / phishing)
 - Risk score (0–100)
-- Extracted indicators (IOCs)
-- SOC-style reasoning explanation
+- Structured SOC explanation
+- Confidence score
 
-Purpose:
-Replaces rule-based classification with LLM reasoning.
+This replaces rule-based classification with contextual reasoning.
 
 ---
 
 ### 6. Reporting Layer
+Generates final SOC-style output including:
 
-Generates final SOC-style output.
-
-Outputs:
 - Verdict
 - Risk score
-- Indicators
-- SOC explanation
+- Detected signals
+- SOC explanation report
 
 ---
 
-## Tool-Based Architecture
+## Risk Scoring Model
 
-Capabilities:
-- URL reputation checking
-- VirusTotal API integration
-- Modular tool system
+- 0–30 → Legitimate  
+- 31–60 → Suspicious  
+- 61–100 → Phishing  
 
-Future:
-- AbuseIPDB
-- URLScan.io
-- OpenCTI
+For evaluation consistency:
+
+> Both “suspicious” and “phishing” are mapped to the malicious class, reflecting SOC triage practices where both require investigation and escalation.
 
 ---
 
-## Memory System
+## LangGraph Workflow
 
-- Stores phishing patterns
-- Detects repeated attacks
-- Improves contextual reasoning
-
----
-
-## Risk Scoring
-
-- 0–30 → Legitimate
-- 31–60 → Suspicious
-- 61–100 → Phishing
-
----
-
-## Architecture Flow
-
-```text
-Email Input
-    ↓
-IOC Agent
-    ↓
-Threat Agent
-    ↓
-VirusTotal Agent
-    ↓
-Memory Agent
-    ↓
-Reasoning Agent (LLM)
-    ↓
-Reporting Layer
-    ↓
-Final Output
-```
----
-### LangGraph Workflow
+The system is implemented using LangGraph for structured orchestration of agents.
 
 ```python
 workflow = StateGraph(AgentState)
@@ -186,69 +162,80 @@ workflow.add_edge("reasoning", "report")
 app = workflow.compile()
 ```
 ---
-### Tech Stack
-- Python
-- FastAPI
-- LangGraph
-- OpenAI GPT-4.1-mini
-- VirusTotal API
-- React
-- TailwindCSS
----
-### How to Run
-- Backend
-cd backend
-pip install -r requirements.txt
-uvicorn main:app --reload
-- Frontend
-cd frontend
-npm install
-npm run dev
----
-### Evaluation
+## Evaluation Framework
 
-Dataset: ~40 emails (phishing, suspicious, legitimate)
+The system is evaluated using a labeled dataset of 40 emails.
 
-Metrics computed using evaluate.py:
+### Metrics
+- Accuracy  
+- Precision  
+- Recall  
+- F1 Score  
+- Confusion Matrix  
 
-- Accuracy
-- Precision (macro average)
-- Recall (macro average)
-- F1 Score (macro average)
-- Confusion matrix
+### Evaluation Method
+- Fully automated evaluation via `evaluate.py`  
+- Real runtime inference (no hardcoded outputs)  
+- SOC-style classification benchmarking  
 
-### Run Evaluation
-
-```bash
-python evaluate.py
-```
----
-### Measured Results
-- Accuracy: ~0.825
-- Precision: computed via evaluation script
-- Recall: computed via evaluation script
-- F1 Score: computed via evaluation script
----
 ### Dataset
 
-Location:
+The dataset includes:
 
-backend/soc_dataset.py
+- Phishing emails (credential theft, impersonation, HR scams)  
+- Legitimate academic and administrative emails  
+- Edge-case emails (Google Forms, attachments, ambiguous messages)  
 
-Includes:
-
-- Phishing emails
-- Legitimate emails
-- Edge-case phishing (HR scams, Google Forms, spoofing)
 ---
-### Why This Is Agentic
 
-This system is agentic because:
+## External Integrations
 
-- Multiple specialized agents
-- LangGraph orchestration
-- Structured state passing
-- External tool integration
-- LLM-based reasoning agent
-- Explainable SOC outputs
+- VirusTotal API (real-time URL analysis)  
+- OpenAI GPT-4.1-mini (LLM reasoning engine)  
+
 ---
+
+## Key Features
+
+- Multi-agent SOC simulation  
+- LLM-driven reasoning engine  
+- External threat intelligence integration  
+- Memory-based pattern recognition  
+- Explainable AI outputs  
+- Evaluation-driven architecture  
+
+---
+
+## Limitations
+
+- Sequential pipeline execution (non-parallel agents)  
+- LLM reasoning depends on prompt quality and input context  
+- Limited adversarial robustness testing against advanced phishing variants  
+
+---
+
+## Future Improvements
+
+- Autonomous tool selection by LLM  
+- Real-time streaming SOC alerts  
+- Integration with OpenCTI / AbuseIPDB  
+- Multi-model ensemble detection  
+- Parallel agent execution for performance optimization  
+
+---
+
+## Tech Stack
+
+- Python  
+- FastAPI  
+- LangGraph  
+- OpenAI GPT-4.1-mini  
+- VirusTotal API  
+- React  
+- TailwindCSS  
+
+---
+
+## Conclusion
+
+This system demonstrates how agentic AI can be applied to cybersecurity by combining multi-agent decomposition, external threat intelligence, and LLM-based reasoning to simulate real SOC analyst decision-making processes with explainable outputs.
