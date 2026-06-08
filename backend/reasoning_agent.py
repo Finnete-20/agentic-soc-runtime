@@ -14,66 +14,76 @@ def reasoning_agent(state):
     memory = state.get("memory", {})
     virustotal = state.get("virustotal", [])
 
+    # 🚨 IMPORTANT: avoid any JSON braces that Python tries to format
     prompt = f"""
-You are an autonomous Security Operations Center (SOC) analyst powered by an LLM.
+You are a SENIOR SOC ANALYST.
 
-You are NOT a rule-based system.
-You make reasoning-based security decisions like a real human analyst.
-
-Your task is to classify the email into EXACTLY ONE label:
-
+Classify the email into ONLY ONE label:
 - legit
 - suspicious
 - phishing
 
-========================
+====================
 EMAIL
-========================
+====================
 {email}
 
-========================
+====================
 IOC SIGNALS
-========================
+====================
 {iocs}
 
-========================
+====================
 THREAT SIGNALS
-========================
+====================
 {threat}
 
-========================
+====================
 MEMORY SIGNALS
-========================
+====================
 {memory}
 
-========================
-VIRUSTOTAL DATA
-========================
+====================
+VIRUSTOTAL
+====================
 {virustotal}
 
-========================
-ANALYSIS INSTRUCTIONS
-========================
+====================
+RULES
+====================
 
-Evaluate like a SOC analyst:
-- Identify social engineering intent
-- Detect impersonation or trust boundary violations
-- Evaluate external links and data collection risks
-- Do NOT rely on simple keyword rules
-- Google Forms, surveys, login links may indicate risk
-- Internal email does NOT automatically mean safe
+1. phishing:
+- credential requests
+- password reset emails
+- payroll / bank update scams
+- invoice scams
+- Microsoft/Google impersonation
+- fake login pages
+- any external domain asking for action
 
-You must reason contextually, not using fixed rules.
+2. suspicious:
+- external links without clear intent
+- Google Forms / data collection
+- unclear attachments
+- weak impersonation
 
-========================
-OUTPUT FORMAT (STRICT JSON ONLY)
-========================
+3. legit:
+- internal messages
+- no links
+- no action requests
+
+4. If unsure → choose higher risk
+
+====================
+RETURN FORMAT (STRICT JSON ONLY)
+====================
+Return ONLY valid JSON like this:
 
 {{
-  "verdict": "legit | suspicious | phishing",
+  "verdict": "legit",
   "score": 0,
-  "reasoning": "short SOC-style explanation",
   "signals": [],
+  "soc_report": [],
   "confidence": 0
 }}
 """
@@ -89,8 +99,6 @@ OUTPUT FORMAT (STRICT JSON ONLY)
         )
 
         content = response.choices[0].message.content.strip()
-
-       
         content = content.replace("```json", "").replace("```", "").strip()
 
         result = json.loads(content)
@@ -99,16 +107,13 @@ OUTPUT FORMAT (STRICT JSON ONLY)
         result = {
             "verdict": "suspicious",
             "score": 50,
-            "reasoning": "LLM parsing failed or invalid response",
             "signals": ["parse_error"],
+            "soc_report": ["LLM failed to respond correctly"],
             "confidence": 50
         }
 
-    # -------------------------
-    
-    # -------------------------
-    verdict = str(result.get("verdict", "suspicious")).lower()
-
+    # normalize
+    verdict = result.get("verdict", "suspicious")
     if verdict not in ["legit", "suspicious", "phishing"]:
         verdict = "suspicious"
 
