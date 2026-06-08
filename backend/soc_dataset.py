@@ -1,7 +1,7 @@
 SOC_DATASET = [
 
 # =========================
-# 🔴 PHISHING (15)
+# 🔴 PHISHING (1)
 # =========================
 
 {
@@ -159,7 +159,7 @@ https://file-share-security.net
 },
 
 # =========================
-# 🟢 LEGITIMATE (15)
+# 🟢 LEGIT (0)
 # =========================
 
 {
@@ -238,7 +238,7 @@ https://file-share-security.net
 },
 
 # =========================
-# ⚠️ EDGE CASES (10)
+# ⚠️ EDGE CASES (0 but tricky)
 # =========================
 
 {

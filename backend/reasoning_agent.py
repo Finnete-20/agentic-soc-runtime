@@ -14,11 +14,14 @@ def reasoning_agent(state):
     memory = state.get("memory", {})
     virustotal = state.get("virustotal", [])
 
-    # SAFE prompt (no nested JSON formatting issues)
     prompt = f"""
-You are a SENIOR SOC ANALYST in a Security Operations Center.
+You are an autonomous Security Operations Center (SOC) analyst powered by an LLM.
 
-Your task is to classify emails into exactly ONE of:
+You are NOT a rule-based system.
+You make reasoning-based security decisions like a real human analyst.
+
+Your task is to classify the email into EXACTLY ONE label:
+
 - legit
 - suspicious
 - phishing
@@ -44,37 +47,33 @@ MEMORY SIGNALS
 {memory}
 
 ========================
-VIRUSTOTAL
+VIRUSTOTAL DATA
 ========================
 {virustotal}
 
 ========================
-CLASSIFICATION RULES
+ANALYSIS INSTRUCTIONS
 ========================
 
-1. If email is internal university/system message with NO external link → legit
+Evaluate like a SOC analyst:
+- Identify social engineering intent
+- Detect impersonation or trust boundary violations
+- Evaluate external links and data collection risks
+- Do NOT rely on simple keyword rules
+- Google Forms, surveys, login links may indicate risk
+- Internal email does NOT automatically mean safe
 
-2. If email has ANY external link OR external sender → at least suspicious
-
-3. If phishing indicators exist (login page, credential request, fake Microsoft, HR/payroll, urgency) → phishing
-
-4. Google Forms / surveys / data collection → suspicious
-
-5. VirusTotal is weak signal (never trust alone)
-
-6. NEVER output "benign" (invalid label)
-
-7. If uncertain:
-   suspicious > legit
+You must reason contextually, not using fixed rules.
 
 ========================
 OUTPUT FORMAT (STRICT JSON ONLY)
 ========================
+
 {{
   "verdict": "legit | suspicious | phishing",
   "score": 0,
+  "reasoning": "short SOC-style explanation",
   "signals": [],
-  "soc_report": [],
   "confidence": 0
 }}
 """
@@ -91,7 +90,7 @@ OUTPUT FORMAT (STRICT JSON ONLY)
 
         content = response.choices[0].message.content.strip()
 
-        # clean markdown wrappers
+       
         content = content.replace("```json", "").replace("```", "").strip()
 
         result = json.loads(content)
@@ -100,25 +99,24 @@ OUTPUT FORMAT (STRICT JSON ONLY)
         result = {
             "verdict": "suspicious",
             "score": 50,
+            "reasoning": "LLM parsing failed or invalid response",
             "signals": ["parse_error"],
-            "soc_report": ["LLM parsing failed or invalid response"],
             "confidence": 50
         }
 
-    # ✅ NORMALIZE LABELS (CRITICAL FIX)
-    label_map = {
-        "benign": "legit",
-        "legit": "legit",
-        "suspicious": "suspicious",
-        "phishing": "phishing"
-    }
+    # -------------------------
+    
+    # -------------------------
+    verdict = str(result.get("verdict", "suspicious")).lower()
 
-    verdict = result.get("verdict", "suspicious")
-    result["verdict"] = label_map.get(verdict, "suspicious")
+    if verdict not in ["legit", "suspicious", "phishing"]:
+        verdict = "suspicious"
+
+    result["verdict"] = verdict
 
     return {
         **state,
         "reasoning": result,
-        "verdict": result["verdict"],
+        "verdict": verdict,
         "risk_score": result.get("score", 50)
     }
